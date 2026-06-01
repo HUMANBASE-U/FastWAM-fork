@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - demo_tiny_fastwam
+  - _self_
+
+output_dir: ./runs/demo_tiny_fastwam/tiny_joint_train
+
+model:
+  mode: joint_video_action
+  lambda_action: 1.0
+  lambda_video: 0.1
+  lambda_latent: 0.0
+
+wandb:
+  name: demo_tiny_joint

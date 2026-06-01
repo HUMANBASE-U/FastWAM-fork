@@ -1,0 +1,16 @@
+train:
+  _target_: fastwam.datasets.demo_synthetic.DemoSyntheticFastWAMDataset
+  length: 64
+  video_frames: 5
+  image_size: [64, 64]
+  action_horizon: 8
+  action_dim: 7
+  proprio_dim: 8
+  context_len: 16
+  text_dim: 64
+  num_tasks: 4
+  noise_std: 0.01
+  seed: 123
+  pre_generate: true
+
+val: null

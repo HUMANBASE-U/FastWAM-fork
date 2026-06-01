@@ -42,6 +42,7 @@ evaluate_results/
 *.pyc
 *Thumbs.db
 *.patch
+!changes-log.txt
 
 # Credential information that should never be checked in
 credentials

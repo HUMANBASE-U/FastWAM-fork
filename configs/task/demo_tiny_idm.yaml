@@ -1,0 +1,16 @@
+# @package _global_
+
+defaults:
+  - demo_tiny_fastwam
+  - _self_
+
+output_dir: ./runs/demo_tiny_fastwam/tiny_idm_train
+
+model:
+  mode: idm_proxy
+  lambda_action: 1.0
+  lambda_video: 0.0
+  lambda_latent: 0.1
+
+wandb:
+  name: demo_tiny_idm

@@ -1,0 +1,470 @@
+# FastWAM Tiny Demo Reproduction Change Log
+
+Date: 2026-05-28 06:29:22 MDT
+Machine: trinity
+GPU: unavailable in current session; nvidia-smi cannot communicate with the NVIDIA driver
+Python: /home/ra-ugrad/anaconda3/bin/python 3.12.7
+Torch: 2.6.0+cu124
+CUDA: torch.version.cuda=12.4, torch.cuda.is_available()=False, torch.cuda.device_count()=0
+
+## Goal
+
+This change does not attempt full Fast-WAM paper reproduction. The goal is a
+student-runnable tiny reproduction path that proves:
+
+- the repo can import in the current environment,
+- a FastWAM-like batch contract can be constructed without LIBERO/RoboTwin,
+- forward/loss/backward/optimizer/checkpoint can run through the existing trainer,
+- GPU/profile diagnostics are recorded even when CUDA is unavailable.
+
+## Project-internal changes
+
+- Added file: `src/fastwam/datasets/demo_synthetic.py`
+  Reason: provide an in-memory synthetic dataset instead of downloading LIBERO/RoboTwin.
+  Summary: emits `video`, `action`, `proprio`, `prompt`, `context`, `context_mask`, padding masks, and metadata. Shapes mimic the real trainer path: video `[3,T,H,W]`, action `[A,D]`, proprio `[A,P]`, context `[L,E]`.
+  How to run: used by `task=demo_tiny_fastwam`.
+  Verification result: smoke test loaded a batch with video `(8,3,5,64,64)`, action `(8,8,7)`, proprio `(8,8,8)`, context `(8,16,64)`.
+
+- Added file: `src/fastwam/models/demo_tiny_fastwam.py`
+  Reason: avoid loading Wan2.2/T5/ActionDiT while preserving the trainer-facing model API.
+  Summary: implements `DemoTinyFastWAM` with `.dit`, `training_loss()`, `save_checkpoint()`, and `load_checkpoint()`. Supported modes are `action_only`, `joint_video_action`, and `idm_proxy`.
+  How to run: selected by `configs/model/demo_tiny_fastwam.yaml`.
+  Verification result: action-only, joint, and IDM smoke tests all completed loss/backward/optimizer step without NaN.
+
+- Added file: `configs/data/demo_synthetic.yaml`
+  Reason: Hydra data config for the tiny synthetic dataset.
+  Summary: default length 64, 5 video frames, 64x64 image size, action horizon 8, action dim 7, proprio dim 8, context dim 64.
+  How to run: `python scripts/train.py task=demo_tiny_fastwam`.
+  Verification result: instantiated by smoke test and tiny train.
+
+- Added file: `configs/model/demo_tiny_fastwam.yaml`
+  Reason: Hydra model config for the tiny proxy model.
+  Summary: hidden dim 128, action-only default, optional video/latent auxiliary losses.
+  How to run: override `model.mode=joint_video_action` or use the task configs below.
+  Verification result: action-only tiny train reached 60 steps.
+
+- Added file: `configs/task/demo_tiny_fastwam.yaml`
+  Reason: main tiny action-only baseline task.
+  Summary: batch size 8, max steps 60, constant LR 3e-3, eval disabled, checkpoint saved at the end.
+  How to run: `bash scripts/run_tiny_train.sh` or `python scripts/train.py task=demo_tiny_fastwam`.
+  Verification result: loss decreased from 0.0697 at step 10 to 0.0140 at step 60.
+
+- Added file: `configs/task/demo_tiny_joint.yaml`
+  Reason: proxy experiment for joint action + future-video auxiliary training.
+  Summary: inherits the tiny task and sets `model.mode=joint_video_action`, `model.lambda_video=0.1`.
+  How to run: `python scripts/smoke_test_tiny_fastwam.py task=demo_tiny_joint`.
+  Verification result: smoke loss 0.390614, including `loss_action=0.329885` and `loss_video=0.060730`.
+
+- Added file: `configs/task/demo_tiny_idm.yaml`
+  Reason: proxy experiment for imagine-then-act / IDM-style tiny training.
+  Summary: inherits the tiny task and sets `model.mode=idm_proxy`, `model.lambda_latent=0.1`.
+  How to run: `python scripts/smoke_test_tiny_fastwam.py task=demo_tiny_idm`.
+  Verification result: smoke loss 0.362365, including `loss_action=0.317393` and `loss_latent=0.044971`.
+
+- Added file: `scripts/smoke_test_tiny_fastwam.py`
+  Reason: fast single-batch validation script.
+  Summary: loads Hydra config, builds dataset/model/dataloader, runs forward/loss/backward/optimizer step, prints shapes and memory status.
+  How to run: `python scripts/smoke_test_tiny_fastwam.py`.
+  Verification result: `SMOKE TEST OK`; loss 0.325540; no NaN.
+
+- Added file: `scripts/run_tiny_train.sh`
+  Reason: reproducible tiny train wrapper with log and GPU profile capture.
+  Summary: runs `scripts/train.py task=demo_tiny_fastwam`, saves log to `runs/demo_tiny_fastwam/tiny_train_log.txt`, starts `nvidia-smi` CSV profiling when available.
+  How to run: `bash scripts/run_tiny_train.sh`.
+  Verification result: 60-step train completed and wrote checkpoint under `runs/demo_tiny_fastwam/tiny_train/checkpoints/`.
+
+- Added file: `scripts/benchmark_tiny_dataloader.py`
+  Reason: benchmark batch size / worker / pin-memory settings for the tiny path.
+  Summary: measures step time and writes `runs/demo_tiny_fastwam/dataloader_benchmark.csv`. It now skips `num_workers>0` safely when multiprocessing sockets are unavailable in the current sandbox/session.
+  How to run: `python scripts/benchmark_tiny_dataloader.py`.
+  Verification result: benchmark completed; worker settings skipped with `PermissionError(1, 'Operation not permitted')`.
+
+- Modified file: `src/fastwam/trainer.py`
+  Reason: make existing trainer robust for CPU/non-Deepspeed tiny runs and expose dataloader/profile knobs.
+  Summary: handles missing Deepspeed plugin, supports optional `pin_memory` and `persistent_workers`, logs GPU memory when CUDA is available, reports unavailable GPU otherwise, and removes a grad-norm tensor warning.
+  How to run: used automatically by `scripts/train.py`.
+  Verification result: official trainer ran 60 tiny steps on CPU and saved final checkpoint.
+
+- Modified file: `.gitignore`
+  Reason: the repo ignored all `*.txt`, which hid the required `changes-log.txt`.
+  Summary: added a precise `!changes-log.txt` exception while keeping run logs and other text outputs ignored.
+  How to run: no runtime command needed.
+  Verification result: `git status --short` now reports `changes-log.txt`.
+
+- Added file: `RUN_TINY_DEMO.md`
+  Reason: user-facing runbook for the tiny reproduction path.
+  Summary: explains what the demo does, how it differs from full paper reproduction, installation, smoke test, tiny train, GPU profile, and next experiments.
+  How to run: read and follow commands in the file.
+  Verification result: commands in the runbook were executed during this session unless marked as future extension.
+
+## System / environment changes
+
+- Command attempted inside sandbox:
+  `python -m pip install -e . --no-deps`
+  Result: failed because isolated build dependency resolution tried to reach PyPI for `setuptools>=68` and network was restricted.
+
+- Command executed with escalation:
+  `python -m pip install -e . --no-deps`
+  Reason: install this repo as editable in the current Python without installing full heavyweight dependencies.
+  Result: installed `fastwam-0.1.0` editable from `/home/ra-ugrad/Ajax/FastWAM-fork`.
+  External effect: wrote package metadata to the active Python environment under `/home/ra-ugrad/anaconda3/lib/python3.12/site-packages`.
+
+- Command executed with escalation:
+  `python -m pip install hydra-core==1.3.2 accelerate==1.12.0`
+  Reason: these were missing and are required by `scripts/train.py`, `fastwam.runtime`, and `Wan22Trainer`.
+  Result: installed `hydra-core 1.3.2` and `accelerate 1.12.0`.
+  External effect: downloaded small Python wheels from PyPI and installed into the active Python environment.
+  Note: full project dependencies remain incomplete by design; missing heavy deps include `deepspeed`, `datasets`, `av`, `torchcodec`, `wandb`, and others. The tiny demo does not require them.
+
+- Command executed with escalation:
+  `python -m pip install termcolor==2.5.0`
+  Reason: `fastwam.utils.misc` imports `termcolor`, and `fastwam.runtime` failed without it.
+  Result: installed `termcolor 2.5.0`.
+  External effect: downloaded and installed one small Python wheel into the active Python environment.
+
+- Command executed with escalation:
+  `pkill -f benchmark_tiny_dataloader.py`
+  Reason: stop a stuck benchmark process after `num_workers>0` hit multiprocessing socket permission errors.
+  Result: stopped the stuck benchmark process.
+
+- File permission change:
+  `chmod +x scripts/smoke_test_tiny_fastwam.py scripts/run_tiny_train.sh scripts/benchmark_tiny_dataloader.py`
+  Reason: make demo scripts directly executable.
+  Scope: project-internal file mode only.
+
+- No conda environment was created.
+- No sudo was used.
+- No CUDA, driver, shell startup file, or system service was changed.
+- No LIBERO/RoboTwin dataset or checkpoint was downloaded.
+- No permanent environment variables were set.
+
+Important environment note:
+
+- `python` points to `/home/ra-ugrad/anaconda3/bin/python` with Python 3.12.7.
+- bare `pip` points to `/home/ra-ugrad/.local/bin/pip` for Python 3.10.
+- Use `python -m pip`, not bare `pip`, in this environment.
+
+## Commands executed
+
+Key commands, in approximate order:
+
+```bash
+pwd
+ls
+git status --short
+find . -maxdepth 3 -type f | sed 's#^./##' | sort | head -200
+sed -n '1,240p' README.md
+sed -n '1,240p' README_zh.md
+sed -n '1,220p' pyproject.toml
+sed -n '1,260p' scripts/train.py
+sed -n '1,980p' src/fastwam/trainer.py
+sed -n '1,620p' src/fastwam/runtime.py
+sed -n '1,260p' configs/train.yaml
+sed -n '1,260p' configs/task/libero_uncond_2cam224_1e-4.yaml
+sed -n '1,260p' configs/data/libero_2cam.yaml
+sed -n '1,620p' src/fastwam/models/wan22/fastwam.py
+sed -n '1,620p' src/fastwam/models/wan22/action_dit.py
+which python
+python --version
+which pip
+pip --version
+nvidia-smi
+python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("cuda available:", torch.cuda.is_available())
+print("cuda version:", torch.version.cuda)
+print("gpu count:", torch.cuda.device_count())
+PY
+python -m pip install -e . --no-deps
+python -m pip install hydra-core==1.3.2 accelerate==1.12.0
+python -m pip install termcolor==2.5.0
+python scripts/smoke_test_tiny_fastwam.py
+bash scripts/run_tiny_train.sh
+python scripts/benchmark_tiny_dataloader.py
+python scripts/smoke_test_tiny_fastwam.py task=demo_tiny_joint output_dir=./runs/demo_tiny_fastwam/smoke_joint
+python scripts/smoke_test_tiny_fastwam.py task=demo_tiny_idm output_dir=./runs/demo_tiny_fastwam/smoke_idm
+```
+
+## Tiny demo results
+
+- smoke test:
+  - command: `python scripts/smoke_test_tiny_fastwam.py`
+  - result: `SMOKE TEST OK`
+  - shapes:
+    - video: `(8, 3, 5, 64, 64)`
+    - action: `(8, 8, 7)`
+    - proprio: `(8, 8, 8)`
+    - context: `(8, 16, 64)`
+  - loss: `0.325540`
+  - grad norm: `0.157021`
+
+- tiny train:
+  - command: `bash scripts/run_tiny_train.sh`
+  - max steps: 60
+  - batch size: 8
+  - device: CPU, because CUDA is unavailable
+  - step 10 loss: `0.0697`
+  - step 20 loss: `0.0545`
+  - step 30 loss: `0.0330`
+  - step 40 loss: `0.0181`
+  - step 50 loss: `0.0109`
+  - final step 60 loss: `0.0140`
+  - speed at final log: `250.57 step/s`, `2004.56 samples/s`
+  - checkpoint: `runs/demo_tiny_fastwam/tiny_train/checkpoints/weights/step_000060.pt`
+
+- GPU memory:
+  - unavailable; `torch.cuda.is_available()` is False.
+
+- approximate GPU utilization:
+  - unavailable; `nvidia-smi` failed with driver communication error.
+
+- log path:
+  - `runs/demo_tiny_fastwam/tiny_train_log.txt`
+  - `runs/demo_tiny_fastwam/gpu_profile.csv`
+  - `runs/demo_tiny_fastwam/dataloader_benchmark.csv`
+
+## GPU utilization diagnosis
+
+- observed issue:
+  - `nvidia-smi` fails: `NVIDIA-SMI has failed because it couldn't communicate with the NVIDIA driver.`
+  - PyTorch warns: `Can't initialize NVML`.
+  - `torch.cuda.is_available()` is False and GPU count is 0.
+
+- likely bottleneck:
+  - primary blocker is not model size or dataloader speed; the current session has no usable CUDA device/driver path.
+  - under this sandbox/session, DataLoader multiprocessing workers also cannot start because local socket creation is blocked: `PermissionError(1, 'Operation not permitted')`.
+
+- attempted fix:
+  - tiny train defaults to CPU-safe `num_workers=0`, `pin_memory=false`, `persistent_workers=false`.
+  - trainer now logs `gpu_mem=unavailable` instead of assuming CUDA.
+  - benchmark script skips worker settings when multiprocessing is unavailable instead of hanging.
+
+- result:
+  - CPU tiny train works.
+  - GPU utilization cannot be measured in the current session.
+  - DataLoader benchmark results:
+
+```text
+setting                                           step_time   gpu_util_approx   memory_used   notes
+bs=1, workers=0, pin=False, persistent=False      0.0021s     NA                NA            CUDA unavailable
+bs=2, workers=0, pin=False, persistent=False      0.0025s     NA                NA            CUDA unavailable
+bs=4, workers=0, pin=False, persistent=False      0.0026s     NA                NA            CUDA unavailable
+bs=4, workers=2, pin=False, persistent=False      SKIP        NA                NA            multiprocessing unavailable
+bs=4, workers=2, pin=True, persistent=True        SKIP        NA                NA            multiprocessing unavailable
+```
+
+## Remaining problems
+
+- Current Python is 3.12.7, while official README recommends Python 3.10.
+- Current Torch is 2.6.0+cu124, while `pyproject.toml` pins 2.7.1+cu128.
+- Full FastWAM dependencies are not installed; this is intentional for the tiny demo but not enough for full LIBERO/RoboTwin reproduction.
+- CUDA is not usable in the current session, so GPU memory/utilization cannot be validated.
+- DataLoader `num_workers>0` is blocked in the current sandbox/session.
+- The demo model is a proxy model, not Wan2.2/FastWAM. It validates the training interface and experiment scaffolding, not paper-scale model behavior.
+
+## Next recommended experiments
+
+- Run `demo_tiny_fastwam` on a session where `nvidia-smi` works and compare batch sizes 8/16/32.
+- Train `demo_tiny_joint` for 60-200 steps and compare action loss against `demo_tiny_fastwam`.
+- Train `demo_tiny_idm` for 60-200 steps and inspect whether latent auxiliary loss stabilizes action prediction.
+- Add a tiny real-data adapter after obtaining one small LIBERO trajectory, keeping the same output keys as `DemoSyntheticFastWAMDataset`.
+- If CUDA works, test `mixed_precision=bf16`, larger batch size, `pin_memory=true`, and `num_workers=2/4`.
+
+## 2026-05-28 GPU follow-up
+
+Context:
+
+- The default Codex sandbox does not expose `/dev/nvidia*`, so sandboxed commands see `torch.cuda.is_available() == False`.
+- Running approved commands outside the sandbox exposes both RTX 4090 GPUs.
+
+Confirmed outside sandbox:
+
+```text
+NVIDIA-SMI 535.171.04
+GPU 0: NVIDIA GeForce RTX 4090, 24564 MiB
+GPU 1: NVIDIA GeForce RTX 4090, 24564 MiB
+torch: 2.6.0+cu124
+torch.cuda.is_available(): True
+torch.cuda.device_count(): 2
+```
+
+Additional project-internal changes:
+
+- Modified file: `scripts/run_tiny_train.sh`
+  Reason: RTX 4090/40-series cards can trigger Accelerate/NCCL P2P checks.
+  Summary: defaulted `NCCL_P2P_DISABLE=1` and `NCCL_IB_DISABLE=1`; added passthrough Hydra overrides via script arguments.
+  Verification result: GPU tiny train starts successfully with `accelerator.device=cuda`.
+
+- Added file: `scripts/gpu_stress_benchmark.py`
+  Reason: distinguish "tiny demo is too small" from "PyTorch cannot drive the GPU".
+  Summary: short controlled CUDA matmul benchmark with built-in `nvidia-smi` CSV monitor.
+  Verification result: GPU 0 reached 100% utilization and about 488 W peak power for a 12-second FP16 matmul benchmark.
+
+- Modified file: `src/fastwam/trainer.py`
+  Reason: avoid per-step CPU-GPU synchronization from metrics that are only needed for logging.
+  Summary: moved loss/metric `.item()` synchronization into the `log_every` branch.
+  Verification result: larger tiny GPU train improved from about 8.2 step/s to about 11.9 step/s.
+
+- Modified file: `src/fastwam/models/demo_tiny_fastwam.py`
+  Reason: keep tiny demo loss metrics on device until trainer logging.
+  Summary: returns detached tensors in `loss_dict` instead of Python floats.
+  Verification result: smoke test still passes on GPU.
+
+GPU commands executed:
+
+```bash
+env CUDA_VISIBLE_DEVICES=0 python scripts/smoke_test_tiny_fastwam.py
+env CUDA_VISIBLE_DEVICES=1 python scripts/smoke_test_tiny_fastwam.py output_dir=./runs/demo_tiny_fastwam/smoke_gpu1
+env CUDA_VISIBLE_DEVICES=0 RUN_DIR=runs/demo_tiny_fastwam/tiny_train_gpu LOG_PATH=runs/demo_tiny_fastwam/tiny_train_gpu_log.txt GPU_PROFILE_PATH=runs/demo_tiny_fastwam/gpu_profile_gpu0.csv MAX_STEPS=100 BATCH_SIZE=128 NUM_WORKERS=0 PIN_MEMORY=true PERSISTENT_WORKERS=false bash scripts/run_tiny_train.sh
+env CUDA_VISIBLE_DEVICES=0 RUN_DIR=runs/demo_tiny_fastwam/tiny_train_gpu_big LOG_PATH=runs/demo_tiny_fastwam/tiny_train_gpu_big_log.txt GPU_PROFILE_PATH=runs/demo_tiny_fastwam/gpu_profile_gpu0_big.csv MAX_STEPS=50 BATCH_SIZE=512 NUM_WORKERS=0 PIN_MEMORY=true PERSISTENT_WORKERS=false bash scripts/run_tiny_train.sh data.train.length=4096 model.hidden_dim=1024 model.latent_dim=256
+env CUDA_VISIBLE_DEVICES=0 RUN_DIR=runs/demo_tiny_fastwam/tiny_train_gpu_big_nosync LOG_PATH=runs/demo_tiny_fastwam/tiny_train_gpu_big_nosync_log.txt GPU_PROFILE_PATH=runs/demo_tiny_fastwam/gpu_profile_gpu0_big_nosync.csv MAX_STEPS=50 BATCH_SIZE=512 NUM_WORKERS=0 PIN_MEMORY=true PERSISTENT_WORKERS=false bash scripts/run_tiny_train.sh data.train.length=4096 model.hidden_dim=1024 model.latent_dim=256 log_every=10
+env CUDA_VISIBLE_DEVICES=0 python scripts/gpu_stress_benchmark.py --seconds 12 --size 8192 --dtype float16 --profile-csv runs/demo_tiny_fastwam/gpu_stress_profile_gpu0.csv
+```
+
+GPU results:
+
+```text
+tiny smoke on GPU 0:
+  device: cuda:0
+  gpu_mem_alloc_mb: 19.3
+  gpu_mem_reserved_mb: 44.0
+
+tiny smoke on physical GPU 1:
+  command used CUDA_VISIBLE_DEVICES=1
+  inside the process it appears as cuda:0
+  smoke test passed
+
+tiny train GPU, small proxy:
+  max_steps: 100
+  batch_size override: 128
+  final loss: 0.0004
+  gpu_mem_alloc: about 34.6 MB
+  profile max util: 15%
+  profile all-sample avg util on GPU 0: 3.75%
+
+larger tiny train before metric-sync fix:
+  max_steps: 50
+  data.train.length: 4096
+  batch_size: 512
+  model.hidden_dim: 1024
+  final loss: 0.0013
+  final speed: about 8.20 step/s
+  gpu_mem_alloc: about 206.8 MB
+  profile max util: 8%
+
+larger tiny train after metric-sync fix:
+  max_steps: 50
+  data.train.length: 4096
+  batch_size: 512
+  model.hidden_dim: 1024
+  final loss: 0.0013
+  final speed: about 11.88 step/s
+  gpu_mem_alloc: about 206.8 MB
+  profile max util: 11%
+
+matmul stress benchmark:
+  size: 8192 x 8192
+  dtype: float16
+  duration: 12 s
+  approx throughput: 163.55 TFLOPS
+  gpu_mem_alloc: 392.1 MB
+  nvidia-smi avg util: 95.65%
+  nvidia-smi max util: 100%
+  max power: 488.18 W
+```
+
+Updated diagnosis:
+
+- The repo can use GPU when commands run outside the Codex sandbox.
+- The 4090s are healthy and can be driven to 100% utilization by PyTorch.
+- The tiny demo training only shows low utilization because it is intentionally tiny: small images, shallow model, small activation memory, synthetic in-memory data, and short kernels.
+- Removing unnecessary metric synchronization improves throughput but does not make the tiny proxy model GPU-heavy.
+- For real FastWAM/Wan training, GPU utilization should be much higher because the Wan/DiT model is orders of magnitude larger; the limiting factors then become batch size, dataloader/video decode, checkpoint/logging frequency, AMP/bf16, and multi-GPU launch configuration.
+
+## 2026-06-01 toy benchmark results and visualizations
+
+Goal:
+
+- Make the toy benchmark self-contained for a beginner to inspect visually.
+- Train all three tiny proxy models and save complete result figures under a tracked docs directory.
+
+Additional project-internal changes:
+
+- Added file: `scripts/run_tiny_benchmark_suite.py`
+  Reason: run the three tiny models in one reproducible benchmark and generate result figures.
+  Summary: trains `action_only`, `joint_video_action`, and `idm_proxy`; writes per-step CSV loss logs; saves checkpoints under ignored `runs/`; generates PNG figures under `docs/tiny_demo_results/`.
+  How to run:
+  `CUDA_VISIBLE_DEVICES=0 python scripts/run_tiny_benchmark_suite.py --steps 160 --batch-size 128 --dataset-length 1024 --hidden-dim 256 --latent-dim 64 --device auto`
+  Verification result: completed on GPU 0 and generated all expected images.
+
+- Added directory: `docs/tiny_demo_results/`
+  Reason: keep lightweight result artifacts in git/GitHub without storing checkpoints.
+  Summary: includes loss CSV files, a README, and PNG figures for dataset overview, loss curves, action predictions, joint video prediction, and benchmark summary.
+  Verification result: PNG files were opened and checked; dimensions are nonzero.
+
+- Modified file: `RUN_TINY_DEMO.md`
+  Reason: document how to regenerate and interpret the toy benchmark figures.
+  Summary: added section 11 with result file descriptions and interpretation.
+  Verification result: runbook points to the generated result directory.
+
+Commands executed:
+
+```bash
+env CUDA_VISIBLE_DEVICES=0 python scripts/run_tiny_benchmark_suite.py --steps 160 --batch-size 128 --dataset-length 1024 --hidden-dim 256 --latent-dim 64 --device auto
+python - <<'PY'
+from pathlib import Path
+from PIL import Image
+for p in sorted(Path('docs/tiny_demo_results').glob('*.png')):
+    img = Image.open(p)
+    print(p, img.size)
+PY
+```
+
+Toy benchmark results:
+
+```text
+device: cuda:0
+steps per model: 160
+batch size: 128
+dataset length: 1024
+hidden dim: 256
+
+action_only:
+  final total loss: 0.000183
+  final action loss: 0.000183
+  avg samples/s over final window: 38400.5
+
+joint_video_action:
+  final total loss: 0.002219
+  final action loss: 0.000208
+  final weighted video loss: 0.002011
+  avg samples/s over final window: 34657.1
+
+idm_proxy:
+  final total loss: 0.002855
+  final action loss: 0.001346
+  final weighted latent loss: 0.001509
+  avg samples/s over final window: 20609.1
+```
+
+Generated tracked results:
+
+```text
+docs/tiny_demo_results/README.md
+docs/tiny_demo_results/action_only_loss.csv
+docs/tiny_demo_results/joint_video_action_loss.csv
+docs/tiny_demo_results/idm_proxy_loss.csv
+docs/tiny_demo_results/dataset_overview.png
+docs/tiny_demo_results/loss_curves.png
+docs/tiny_demo_results/action_prediction_all_models.png
+docs/tiny_demo_results/joint_video_prediction.png
+docs/tiny_demo_results/benchmark_summary.png
+```
+
+Interpretation:
+
+- `action_only` is easiest and gets the lowest action loss because all capacity is focused on action prediction.
+- `joint_video_action` learns action and a low-resolution video auxiliary target; its total loss is higher because video loss is included.
+- `idm_proxy` is intentionally harder because action prediction passes through a future-latent bottleneck, which simulates an imagine-then-act design.
+- These results are a toy benchmark for learning and debugging, not paper-scale Fast-WAM reproduction.

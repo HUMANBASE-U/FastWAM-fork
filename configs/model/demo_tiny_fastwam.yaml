@@ -1,0 +1,15 @@
+_target_: fastwam.models.demo_tiny_fastwam.DemoTinyFastWAM
+image_size: ${data.train.image_size}
+video_frames: ${data.train.video_frames}
+action_horizon: ${data.train.action_horizon}
+action_dim: ${data.train.action_dim}
+proprio_dim: ${data.train.proprio_dim}
+context_len: ${data.train.context_len}
+text_dim: ${data.train.text_dim}
+hidden_dim: 128
+latent_dim: 48
+video_loss_size: 16
+mode: action_only
+lambda_action: 1.0
+lambda_video: 0.0
+lambda_latent: 0.0

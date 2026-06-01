@@ -62,10 +62,16 @@ class Wan22Trainer:
             step_scheduler_with_optimizer=False,
         )
         
+        deepspeed_plugin = getattr(self.accelerator.state, "deepspeed_plugin", None)
+        zero_stage = "none"
+        if deepspeed_plugin is not None:
+            zero_config = getattr(deepspeed_plugin, "deepspeed_config", {}) or {}
+            zero_stage = zero_config.get("zero_optimization", {}).get("stage", "unknown")
+
         logger.info(
             "Accelerate training: distributed_type=%s zero_stage=%s world_size=%d process_index=%d cfg_mixed_precision=%s accelerator_mixed_precision=%s grad_accum=%d grad_clip=%.4f",
             self.accelerator.distributed_type,
-            self.accelerator.state.deepspeed_plugin.deepspeed_config.get("zero_optimization", {}).get("stage", "unknown"),
+            zero_stage,
             self.accelerator.num_processes,
             self.accelerator.process_index,
             self.mixed_precision,
@@ -165,6 +171,8 @@ class Wan22Trainer:
         self.wandb_run = None
 
     def _build_loader(self, dataset, worker_init_fn=None):
+        pin_memory = bool(self.cfg.get("pin_memory", torch.cuda.is_available()))
+        persistent_workers = bool(self.cfg.get("persistent_workers", False)) and self.num_workers > 0
         self.train_sampler = ResumableEpochSampler(
             dataset=dataset,
             seed=self.seed,
@@ -177,7 +185,8 @@ class Wan22Trainer:
             shuffle=False,
             sampler=self.train_sampler,
             num_workers=self.num_workers,
-            pin_memory=torch.cuda.is_available(),
+            pin_memory=pin_memory,
+            persistent_workers=persistent_workers,
             worker_init_fn=worker_init_fn,
         )
 
@@ -681,21 +690,36 @@ class Wan22Trainer:
                         self.scheduler.step()
                     self.optimizer.zero_grad(set_to_none=True)
                     self.global_step += 1
-                    global_loss = float(
-                        self.accelerator.gather(loss.detach().float().reshape(1)).mean().item()
+
+                    should_log = (
+                        self.log_every > 0
+                        and self.global_step % self.log_every == 0
+                        and self.accelerator.is_main_process
                     )
-                    global_loss_metrics = {}
-                    for key, value in loss_dict.items():
-                        metric_tensor = torch.tensor(float(value), device=loss.device, dtype=torch.float32).reshape(1)
-                        global_loss_metrics[key] = float(
-                            self.accelerator.gather(metric_tensor).mean().item()
+                    if should_log:
+                        global_loss = float(
+                            self.accelerator.gather(loss.detach().float().reshape(1)).mean().item()
                         )
-                    grad_norm_tensor = torch.tensor(grad_norm, device=loss.device, dtype=torch.float32)
-                    global_grad_norm = float(self.accelerator.gather(grad_norm_tensor).mean().item())
+                        global_loss_metrics = {}
+                        for key, value in loss_dict.items():
+                            if isinstance(value, torch.Tensor):
+                                metric_tensor = value.detach().to(
+                                    device=loss.device,
+                                    dtype=torch.float32,
+                                ).reshape(1)
+                            else:
+                                metric_tensor = torch.as_tensor(
+                                    float(value),
+                                    device=loss.device,
+                                    dtype=torch.float32,
+                                ).reshape(1)
+                            global_loss_metrics[key] = float(
+                                self.accelerator.gather(metric_tensor).mean().item()
+                            )
+                        grad_norm_tensor = torch.as_tensor(grad_norm, device=loss.device, dtype=torch.float32)
+                        global_grad_norm = float(self.accelerator.gather(grad_norm_tensor).mean().item())
+                        current_lr = float(self.optimizer.param_groups[0]["lr"])
 
-                    current_lr = float(self.optimizer.param_groups[0]["lr"])
-
-                    if self.log_every > 0 and self.global_step % self.log_every == 0 and self.accelerator.is_main_process:
                         eta_str, steps_per_sec = self._estimate_eta()
                         description = "[train] epoch=%d step=%d/%d loss=%.4f " % (
                             self.epoch,
@@ -712,6 +736,16 @@ class Wan22Trainer:
                             steps_per_sec * self.batch_size * self.accelerator.num_processes,
                             eta_str,
                         )
+                        if torch.cuda.is_available():
+                            mem_device = self.accelerator.device
+                            mem_alloc = torch.cuda.memory_allocated(mem_device) / (1024 ** 2)
+                            mem_reserved = torch.cuda.memory_reserved(mem_device) / (1024 ** 2)
+                            description += " gpu_mem_alloc=%.1fMB gpu_mem_reserved=%.1fMB" % (
+                                mem_alloc,
+                                mem_reserved,
+                            )
+                        else:
+                            description += " gpu_mem=unavailable"
                         logger.info(description)
 
                         wandb_payload = {
