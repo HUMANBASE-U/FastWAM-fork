@@ -1,0 +1,12 @@
+name: pickcube_state
+env_id: PickCube-v1
+traj_path: ~/.maniskill/demos/PickCube-v1/rl/trajectory.state.pd_ee_delta_pos.physx_cpu.h5
+obs_mode: state
+control_mode: pd_ee_delta_pos
+obs_dim: 42
+action_dim: 4
+action_horizon: 8
+future_horizon: 8
+max_trajectories: 511
+val_fraction: 0.1
+normalize: true

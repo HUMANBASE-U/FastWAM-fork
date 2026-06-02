@@ -468,3 +468,176 @@ Interpretation:
 - `joint_video_action` learns action and a low-resolution video auxiliary target; its total loss is higher because video loss is included.
 - `idm_proxy` is intentionally harder because action prediction passes through a future-latent bottleneck, which simulates an imagine-then-act design.
 - These results are a toy benchmark for learning and debugging, not paper-scale Fast-WAM reproduction.
+
+## 2026-06-01 PickCube FastWAM-small benchmark
+
+Date:
+
+- 2026-06-01 America/Denver
+
+Machine / environment:
+
+- Python: 3.12.7
+- Torch: 2.6.0+cu124
+- CUDA from PyTorch: 12.4
+- GPU outside Codex sandbox: 2 x NVIDIA GeForce RTX 4090, 24564 MiB each
+- Driver: 535.171.04
+- ManiSkill: 3.0.1
+- Important note: inside the default Codex sandbox, `torch.cuda.is_available()` can report `False`; with approved sandbox escape/escalated execution, PyTorch sees both RTX 4090 GPUs.
+
+Goal:
+
+- Move from synthetic toy data to one concrete robot task: ManiSkill `PickCube-v1`.
+- Keep the model small enough for a beginner-controlled benchmark.
+- Keep FastWAM-style training with an action head and a future-state auxiliary head.
+- Follow the requested route at inference: no test-time future imagination; evaluation calls only the action head.
+
+Project-internal changes:
+
+- Added file: `src/fastwam/datasets/pickcube_state_dataset.py`
+  Reason: load replayed ManiSkill PickCube state demonstrations into PyTorch.
+  Summary: returns normalized `obs` `[42]`, `action` `[H,4]`, and `future_obs` `[K,42]`; includes action denormalization and obs normalization helpers.
+  Verification result: loaded 511 replayed trajectories, 19780 train chunks, 2193 val chunks.
+
+- Added file: `src/fastwam/models/pickcube_fastwam_small.py`
+  Reason: provide a small FastWAM-style model that can train on PickCube quickly.
+  Summary: MLP encoder -> action head + future-state auxiliary head; `predict_action_chunk()` uses only the action head for no-imagination inference.
+  Verification result: CUDA smoke train completed; loss/backward/optimizer/checkpoint all worked.
+
+- Added files:
+  - `configs/data/pickcube_state.yaml`
+  - `configs/model/pickcube_fastwam_small.yaml`
+  - `configs/task/pickcube_fastwam_no_imagination.yaml`
+  Reason: document the small PickCube benchmark configuration.
+  Summary: state obs, `pd_ee_delta_pos` action, 8-step action horizon, 8-step future horizon, small MLP dimensions.
+
+- Added file: `experiments/pickcube_fastwam/run_pickcube_fastwam_pipeline.py`
+  Reason: one command should run training, evaluation, metrics, plots, and videos.
+  Summary: trains on PickCube demos, saves checkpoint/logs to `runs/pickcube_fastwam/`, evaluates in ManiSkill, writes tracked result artifacts to `docs/pickcube_fastwam_results/`; sets `MPLCONFIGDIR=/tmp/matplotlib-cache` and `XDG_CACHE_HOME=/tmp/xdg-cache` internally if unset to avoid server cache warnings.
+  How to run:
+  `CUDA_VISIBLE_DEVICES=0 python experiments/pickcube_fastwam/run_pickcube_fastwam_pipeline.py --amp`
+  Verification result: 5000-step run completed and evaluated 20 episodes.
+
+- Added file: `scripts/run_pickcube_fastwam.sh`
+  Reason: simple wrapper for the full benchmark.
+  How to run:
+  `CUDA_VISIBLE_DEVICES=0 bash scripts/run_pickcube_fastwam.sh`
+
+- Added file: `RUN_PICKCUBE_FASTWAM.md`
+  Reason: beginner-friendly runbook explaining what the benchmark does, how it differs from the paper, how to rebuild data, how to run, and how to interpret GPU utilization.
+
+- Added directory: `docs/pickcube_fastwam_results/`
+  Reason: track lightweight final artifacts in GitHub without tracking checkpoints or local datasets.
+  Summary: includes README, metrics JSON, eval CSV, loss CSV, loss curves, eval summary, GPU profile summary, and small MP4 videos.
+  Verification result: directory size is about 836K; video directory is about 700K.
+
+System / environment changes:
+
+- Downloaded ManiSkill PickCube demonstration data outside the repo:
+  `python -m mani_skill.utils.download_demo PickCube-v1`
+  Location:
+  `~/.maniskill/demos/PickCube-v1/rl/`
+  Approximate local size:
+  `74M`
+  Reason:
+  use a small real robot manipulation demo instead of LIBERO/RoboTwin full datasets.
+
+- Generated replayed state-observation training file outside the repo:
+  `~/.maniskill/demos/PickCube-v1/rl/trajectory.state.pd_ee_delta_pos.physx_cpu.h5`
+  Command:
+  `python -m mani_skill.trajectory.replay_trajectory --traj-path ~/.maniskill/demos/PickCube-v1/rl/trajectory.none.pd_ee_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1`
+  Result:
+  511/512 demos saved; one episode failed replay and was skipped.
+
+- Used environment variable:
+  `CUDA_VISIBLE_DEVICES=0`
+  Reason:
+  restrict the experiment to one RTX 4090 and avoid unnecessary load on both GPUs.
+
+- Used `nvidia-smi` background profiling outside the repo:
+  Output copied into:
+  `docs/pickcube_fastwam_results/gpu_profile.csv`
+
+- No sudo commands were used.
+- No conda environment was rebuilt.
+- No large dataset/checkpoint was added to Git.
+
+Commands executed:
+
+```bash
+python -m mani_skill.utils.download_demo PickCube-v1
+python -m mani_skill.trajectory.replay_trajectory --traj-path ~/.maniskill/demos/PickCube-v1/rl/trajectory.none.pd_ee_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 5 --num-envs 1
+env CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path ~/.maniskill/demos/PickCube-v1/rl/trajectory.none.pd_ee_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1
+env CUDA_VISIBLE_DEVICES=0 python experiments/pickcube_fastwam/run_pickcube_fastwam_pipeline.py --steps 2 --batch-size 64 --num-workers 0 --max-trajectories 32 --skip-eval --run-dir runs/pickcube_fastwam_smoke --docs-dir docs/pickcube_fastwam_results_smoke --device cuda:0
+bash -lc 'mkdir -p runs/pickcube_fastwam; nvidia-smi --query-gpu=timestamp,index,utilization.gpu,utilization.memory,memory.used,power.draw --format=csv -l 1 > runs/pickcube_fastwam/gpu_profile.csv & MON=$!; env CUDA_VISIBLE_DEVICES=0 python experiments/pickcube_fastwam/run_pickcube_fastwam_pipeline.py --amp --steps 5000 --batch-size 512 --num-workers 2 --eval-episodes 20 --run-dir runs/pickcube_fastwam --docs-dir docs/pickcube_fastwam_results --device cuda:0 | tee runs/pickcube_fastwam/pipeline_log.txt; STATUS=${PIPESTATUS[0]}; kill $MON 2>/dev/null || true; exit $STATUS'
+cp runs/pickcube_fastwam/loss_history.csv docs/pickcube_fastwam_results/loss_history.csv
+cp runs/pickcube_fastwam/gpu_profile.csv docs/pickcube_fastwam_results/gpu_profile.csv
+```
+
+PickCube tiny benchmark results:
+
+```text
+task: ManiSkill PickCube-v1
+obs_mode: state
+control_mode: pd_ee_delta_pos
+action space: 4D [dx, dy, dz, gripper]
+training steps: 5000
+batch size: 512
+train chunks: 19780
+val chunks: 2193
+final train loss: 0.00995
+final action loss: 0.00695
+final future loss: 0.00299
+final val loss: 0.01738
+eval episodes: 20
+successes: 15
+success rate: 0.75
+avg return: 8.283
+avg episode len: 23.00
+avg is_grasped: 0.95
+avg is_obj_placed: 0.80
+success video: docs/pickcube_fastwam_results/videos/success_episode.mp4
+last eval video: docs/pickcube_fastwam_results/videos/episode_019_success.mp4
+```
+
+GPU utilization diagnosis:
+
+```text
+GPU 0 avg util: 5.06%
+GPU 0 max util: 7.00%
+GPU 0 avg memory used by nvidia-smi: 695 MiB
+GPU 0 max memory used by nvidia-smi: 880 MiB
+GPU 1 avg util: 0.00%
+```
+
+Observed issue:
+
+- GPU utilization is low even though CUDA is used.
+
+Likely bottleneck / explanation:
+
+- This benchmark is intentionally small: 42D state input, 4D action output, small MLP, small tensors.
+- Kernel launch overhead and simulator/render/eval overhead dominate relative to math.
+- This is different from full FastWAM/Wan/DiT visual training, where model compute would be much larger.
+
+Attempted fix:
+
+- Used batch size 512, `pin_memory=True`, two dataloader workers, AMP, and preloaded H5 trajectories in memory.
+- Kept `CUDA_VISIBLE_DEVICES=0` so only one 4090 is used.
+
+Result:
+
+- Training runs fast and correctly, but does not saturate a 4090. This is expected for a beginner-scale state benchmark.
+- To increase utilization, move to RGB observations, larger hidden dimensions, larger batch size, or parallel envs; do not do this by default because it makes the demo heavier.
+
+Remaining problems:
+
+- Current PickCube version uses state observations, not camera images.
+- Future-state head is an auxiliary proxy loss, not a full paper-scale world model/video model.
+- Success rate is good for a small benchmark but not guaranteed across all random seeds.
+
+Next recommended experiments:
+
+- Baseline ablation: `lambda_future=0.0` action-only vs `lambda_future=0.2` action+future-state auxiliary.
+- Visual upgrade: replace state input with RGB observations while keeping the same no-imagination inference route.
+- IDM proxy: predict future latent first, then decode action from future latent, and compare success rate to the current action-head-only inference.

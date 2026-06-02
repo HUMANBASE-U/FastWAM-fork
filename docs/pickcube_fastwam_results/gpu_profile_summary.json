@@ -1,0 +1,20 @@
+{
+  "0": {
+    "samples": 52,
+    "avg_util": 5.06,
+    "max_util": 7.0,
+    "avg_mem_mib": 695.04,
+    "max_mem_mib": 880.0,
+    "avg_power_w": 78.1,
+    "max_power_w": 82.62
+  },
+  "1": {
+    "samples": 52,
+    "avg_util": 0.0,
+    "max_util": 0.0,
+    "avg_mem_mib": 19.54,
+    "max_mem_mib": 28.0,
+    "avg_power_w": 32.06,
+    "max_power_w": 68.54
+  }
+}

@@ -1,0 +1,199 @@
+{
+  "env_id": "PickCube-v1",
+  "obs_mode": "state",
+  "control_mode": "pd_ee_delta_pos",
+  "action_space": "4D [dx, dy, dz, gripper]",
+  "test_time_future_imagination": false,
+  "num_eval_episodes": 20,
+  "max_episode_steps": 50,
+  "successes": 15,
+  "success_rate": 0.75,
+  "avg_return": 8.282908615842462,
+  "avg_episode_len": 23.0,
+  "avg_is_grasped": 0.95,
+  "avg_is_obj_placed": 0.8,
+  "success_video": "docs/pickcube_fastwam_results/videos/success_episode.mp4",
+  "last_eval_video": "docs/pickcube_fastwam_results/videos/episode_019_success.mp4",
+  "episodes": [
+    {
+      "episode": 0,
+      "success": 1,
+      "return": 5.0352567955851555,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_000_success.mp4"
+    },
+    {
+      "episode": 1,
+      "success": 1,
+      "return": 2.513367310166359,
+      "episode_len": 6,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_001_success.mp4"
+    },
+    {
+      "episode": 2,
+      "success": 0,
+      "return": 23.68569079041481,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_obj_placed": 0,
+      "video": "docs/pickcube_fastwam_results/videos/episode_002_fail.mp4"
+    },
+    {
+      "episode": 3,
+      "success": 1,
+      "return": 12.831374026834965,
+      "episode_len": 26,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_003_success.mp4"
+    },
+    {
+      "episode": 4,
+      "success": 1,
+      "return": 6.866521961987019,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_004_success.mp4"
+    },
+    {
+      "episode": 5,
+      "success": 0,
+      "return": 7.719868019223213,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_obj_placed": 0,
+      "video": "docs/pickcube_fastwam_results/videos/episode_005_fail.mp4"
+    },
+    {
+      "episode": 6,
+      "success": 1,
+      "return": 5.486356757581234,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_006_success.mp4"
+    },
+    {
+      "episode": 7,
+      "success": 1,
+      "return": 5.885217905044556,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_007_success.mp4"
+    },
+    {
+      "episode": 8,
+      "success": 1,
+      "return": 4.868556886911392,
+      "episode_len": 11,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_008_success.mp4"
+    },
+    {
+      "episode": 9,
+      "success": 1,
+      "return": 5.120705962181091,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_009_success.mp4"
+    },
+    {
+      "episode": 10,
+      "success": 1,
+      "return": 4.474647417664528,
+      "episode_len": 11,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_010_success.mp4"
+    },
+    {
+      "episode": 11,
+      "success": 1,
+      "return": 4.461697846651077,
+      "episode_len": 10,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_011_success.mp4"
+    },
+    {
+      "episode": 12,
+      "success": 1,
+      "return": 7.633411638438702,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_012_success.mp4"
+    },
+    {
+      "episode": 13,
+      "success": 0,
+      "return": 26.015811197459698,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_obj_placed": 0,
+      "video": "docs/pickcube_fastwam_results/videos/episode_013_fail.mp4"
+    },
+    {
+      "episode": 14,
+      "success": 1,
+      "return": 8.222764685750008,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_014_success.mp4"
+    },
+    {
+      "episode": 15,
+      "success": 0,
+      "return": 5.985560543835163,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_obj_placed": 0,
+      "video": "docs/pickcube_fastwam_results/videos/episode_015_fail.mp4"
+    },
+    {
+      "episode": 16,
+      "success": 1,
+      "return": 5.828127771615982,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_016_success.mp4"
+    },
+    {
+      "episode": 17,
+      "success": 1,
+      "return": 9.13793195784092,
+      "episode_len": 20,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_017_success.mp4"
+    },
+    {
+      "episode": 18,
+      "success": 0,
+      "return": 7.775881111621857,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_018_fail.mp4"
+    },
+    {
+      "episode": 19,
+      "success": 1,
+      "return": 6.109421730041504,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_obj_placed": 1,
+      "video": "docs/pickcube_fastwam_results/videos/episode_019_success.mp4"
+    }
+  ]
+}

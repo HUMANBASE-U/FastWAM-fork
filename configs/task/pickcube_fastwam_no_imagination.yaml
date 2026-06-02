@@ -1,0 +1,25 @@
+name: pickcube_fastwam_no_imagination
+description: >
+  Small FastWAM-style PickCube benchmark. Training uses action prediction plus
+  a future-state auxiliary loss; evaluation uses only the action head and does
+  not perform test-time future imagination.
+data: ../data/pickcube_state.yaml
+model: ../model/pickcube_fastwam_small.yaml
+train:
+  run_dir: runs/pickcube_fastwam
+  docs_dir: docs/pickcube_fastwam_results
+  steps: 5000
+  batch_size: 512
+  lr: 0.0003
+  weight_decay: 0.000001
+  num_workers: 2
+  log_every: 100
+  eval_every: 500
+  amp: true
+eval:
+  episodes: 20
+  max_episode_steps: 50
+  execute_horizon: 1
+  render_width: 256
+  render_height: 256
+  fps: 20

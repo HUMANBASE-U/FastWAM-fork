@@ -1,0 +1,11 @@
+name: pickcube_fastwam_small
+obs_dim: 42
+action_dim: 4
+action_horizon: 8
+future_horizon: 8
+hidden_dim: 512
+latent_dim: 256
+num_layers: 3
+dropout: 0.05
+lambda_action: 1.0
+lambda_future: 0.2
