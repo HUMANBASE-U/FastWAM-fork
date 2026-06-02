@@ -1,0 +1,471 @@
+{
+  "variant": "pfd",
+  "env_id": "StackCube-v1",
+  "obs_mode": "state",
+  "control_mode": "pd_joint_delta_pos",
+  "binarize_gripper": true,
+  "clip_actions": true,
+  "pfd_teacher_used_at_inference": false,
+  "pfd_future_tokens_used_at_inference": false,
+  "num_eval_episodes": 50,
+  "successes": 23,
+  "success_rate": 0.46,
+  "avg_return": 12.078314563930034,
+  "avg_episode_len": 35.06,
+  "avg_is_grasped": 1.0,
+  "avg_is_cubeA_on_cubeB": 0.64,
+  "success_video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/success_episode.mp4",
+  "last_eval_video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_049_fail.mp4",
+  "episodes": [
+    {
+      "episode": 0,
+      "success": 0,
+      "return": 27.449933022260666,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_000_fail.mp4"
+    },
+    {
+      "episode": 1,
+      "success": 0,
+      "return": 20.649138808250427,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_001_fail.mp4"
+    },
+    {
+      "episode": 2,
+      "success": 0,
+      "return": 14.583073899149895,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_002_fail.mp4"
+    },
+    {
+      "episode": 3,
+      "success": 1,
+      "return": 7.1027504205703735,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_003_success.mp4"
+    },
+    {
+      "episode": 4,
+      "success": 0,
+      "return": 12.912685677409172,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_004_fail.mp4"
+    },
+    {
+      "episode": 5,
+      "success": 0,
+      "return": 33.95793117582798,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_005_fail.mp4"
+    },
+    {
+      "episode": 6,
+      "success": 1,
+      "return": 10.062427818775177,
+      "episode_len": 23,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_006_success.mp4"
+    },
+    {
+      "episode": 7,
+      "success": 0,
+      "return": 12.72508056461811,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_007_fail.mp4"
+    },
+    {
+      "episode": 8,
+      "success": 1,
+      "return": 13.301483377814293,
+      "episode_len": 28,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_008_success.mp4"
+    },
+    {
+      "episode": 9,
+      "success": 1,
+      "return": 6.342212304472923,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_009_success.mp4"
+    },
+    {
+      "episode": 10,
+      "success": 1,
+      "return": 6.577048346400261,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_010_success.mp4"
+    },
+    {
+      "episode": 11,
+      "success": 0,
+      "return": 10.88481318950653,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_011_fail.mp4"
+    },
+    {
+      "episode": 12,
+      "success": 0,
+      "return": 20.81115221977234,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_012_fail.mp4"
+    },
+    {
+      "episode": 13,
+      "success": 0,
+      "return": 9.362646788358688,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_013_fail.mp4"
+    },
+    {
+      "episode": 14,
+      "success": 1,
+      "return": 6.139907047152519,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_014_success.mp4"
+    },
+    {
+      "episode": 15,
+      "success": 0,
+      "return": 14.162838861346245,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_015_fail.mp4"
+    },
+    {
+      "episode": 16,
+      "success": 0,
+      "return": 13.448854684829712,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_016_fail.mp4"
+    },
+    {
+      "episode": 17,
+      "success": 0,
+      "return": 16.01727630198002,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_017_fail.mp4"
+    },
+    {
+      "episode": 18,
+      "success": 0,
+      "return": 12.042048528790474,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_018_fail.mp4"
+    },
+    {
+      "episode": 19,
+      "success": 1,
+      "return": 10.304292753338814,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_019_success.mp4"
+    },
+    {
+      "episode": 20,
+      "success": 1,
+      "return": 8.280524626374245,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_020_success.mp4"
+    },
+    {
+      "episode": 21,
+      "success": 1,
+      "return": 9.023852780461311,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_021_success.mp4"
+    },
+    {
+      "episode": 22,
+      "success": 1,
+      "return": 7.447000324726105,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_022_success.mp4"
+    },
+    {
+      "episode": 23,
+      "success": 0,
+      "return": 16.99284365773201,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_023_fail.mp4"
+    },
+    {
+      "episode": 24,
+      "success": 1,
+      "return": 6.2868045419454575,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_024_success.mp4"
+    },
+    {
+      "episode": 25,
+      "success": 1,
+      "return": 8.3291624635458,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_025_success.mp4"
+    },
+    {
+      "episode": 26,
+      "success": 0,
+      "return": 19.574246674776077,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_026_fail.mp4"
+    },
+    {
+      "episode": 27,
+      "success": 0,
+      "return": 11.733614563941956,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_027_fail.mp4"
+    },
+    {
+      "episode": 28,
+      "success": 1,
+      "return": 9.018995702266693,
+      "episode_len": 19,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_028_success.mp4"
+    },
+    {
+      "episode": 29,
+      "success": 1,
+      "return": 9.01624484360218,
+      "episode_len": 20,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_029_success.mp4"
+    },
+    {
+      "episode": 30,
+      "success": 0,
+      "return": 14.77337458729744,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_030_fail.mp4"
+    },
+    {
+      "episode": 31,
+      "success": 0,
+      "return": 9.770045384764671,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_031_fail.mp4"
+    },
+    {
+      "episode": 32,
+      "success": 1,
+      "return": 7.669193476438522,
+      "episode_len": 15,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_032_success.mp4"
+    },
+    {
+      "episode": 33,
+      "success": 1,
+      "return": 9.580769523978233,
+      "episode_len": 22,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_033_success.mp4"
+    },
+    {
+      "episode": 34,
+      "success": 1,
+      "return": 7.9435402154922485,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_034_success.mp4"
+    },
+    {
+      "episode": 35,
+      "success": 0,
+      "return": 19.048058792948723,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_035_fail.mp4"
+    },
+    {
+      "episode": 36,
+      "success": 1,
+      "return": 6.642150312662125,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_036_success.mp4"
+    },
+    {
+      "episode": 37,
+      "success": 1,
+      "return": 8.46400934457779,
+      "episode_len": 20,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_037_success.mp4"
+    },
+    {
+      "episode": 38,
+      "success": 0,
+      "return": 16.337174892425537,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_038_fail.mp4"
+    },
+    {
+      "episode": 39,
+      "success": 0,
+      "return": 11.115850389003754,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_039_fail.mp4"
+    },
+    {
+      "episode": 40,
+      "success": 0,
+      "return": 9.067040115594864,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_040_fail.mp4"
+    },
+    {
+      "episode": 41,
+      "success": 0,
+      "return": 9.931365132331848,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_041_fail.mp4"
+    },
+    {
+      "episode": 42,
+      "success": 0,
+      "return": 15.216487064957619,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_042_fail.mp4"
+    },
+    {
+      "episode": 43,
+      "success": 1,
+      "return": 7.2928537130355835,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_043_success.mp4"
+    },
+    {
+      "episode": 44,
+      "success": 1,
+      "return": 8.339811578392982,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_044_success.mp4"
+    },
+    {
+      "episode": 45,
+      "success": 1,
+      "return": 6.957769498229027,
+      "episode_len": 15,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_045_success.mp4"
+    },
+    {
+      "episode": 46,
+      "success": 0,
+      "return": 19.40260598063469,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_046_fail.mp4"
+    },
+    {
+      "episode": 47,
+      "success": 0,
+      "return": 11.192153975367546,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_047_fail.mp4"
+    },
+    {
+      "episode": 48,
+      "success": 1,
+      "return": 8.293215364217758,
+      "episode_len": 26,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_048_success.mp4"
+    },
+    {
+      "episode": 49,
+      "success": 0,
+      "return": 12.33737288415432,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/videos/episode_049_fail.mp4"
+    }
+  ]
+}

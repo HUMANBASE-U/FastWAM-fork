@@ -188,6 +188,76 @@ Current-only baseline config is provided but not run in the first PFD-only pass:
 configs/fastwam_baseline_small.yaml
 ```
 
+## 2026-06-02 StackCube Success-Rate Iteration
+
+The low success rate was not mainly a GPU problem or only a parameter-count problem.
+The main bottleneck was action/control mode plus behavior-cloning target quality.
+
+Summary on `StackCube-v1`:
+
+| Route | Control mode | Policy | Success |
+|---|---|---:|---:|
+| Original state-token PFD | `pd_ee_delta_pos` | PFD transformer | 2/20, 10% |
+| No-clip BC baseline | `pd_ee_delta_pos` | transformer | 15/50, 30% |
+| Motion-planning BC | `pd_joint_pos` | transformer | 0/50, 0% |
+| PPO-demo BC | `pd_joint_delta_pos` | transformer | 15/50, 30% |
+| PPO-distilled action-only | `pd_joint_delta_pos` | 19.3M transformer | 37/50, 74% |
+| PFD residual ablation | `pd_joint_delta_pos` | PPO-distilled PFD | 23/50, 46% |
+| Frozen PPO-backbone route | `pd_joint_delta_pos` | PPO actor in same eval pipeline | 41/50, 82% |
+
+Interpretation:
+
+- The best pure learned transformer policy is currently the PPO-distilled action-only model at 74%.
+- The 80%+ result uses the frozen PPO expert as a pretrained backbone / teacher-policy route, not a from-scratch PFD policy.
+- Direct PFD residual training hurt this state-token proxy because the residual became noisy and large.
+- The next meaningful PFD step is staged residual-adapter training on top of a strong frozen/pretrained base policy.
+
+Run the best pure learned transformer policy:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py \
+  --variant baseline \
+  --action-target ppo \
+  --ppo-teacher-ckpt ~/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt \
+  --ppo-target-clip \
+  --ppo-target-sign-gripper \
+  --traj-path ~/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 \
+  --control-mode pd_joint_delta_pos \
+  --action-horizon 1 \
+  --state-horizon 8 \
+  --hidden-dim 512 \
+  --num-layers 6 \
+  --num-heads 8 \
+  --ffn-dim 2048 \
+  --lambda-video 0.0 \
+  --steps 15000 \
+  --batch-size 1024 \
+  --lr 0.0003 \
+  --eval-episodes 50 \
+  --binarize-gripper
+```
+
+Run the 80%+ frozen PPO-backbone route:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py \
+  --variant baseline \
+  --skip-train \
+  --eval-policy ppo \
+  --eval-ppo-ckpt ~/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt \
+  --traj-path ~/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 \
+  --control-mode pd_joint_delta_pos \
+  --action-horizon 1 \
+  --state-horizon 8 \
+  --hidden-dim 512 \
+  --num-layers 6 \
+  --num-heads 8 \
+  --ffn-dim 2048 \
+  --lambda-video 0.0 \
+  --eval-episodes 50 \
+  --binarize-gripper
+```
+
 ## Current Result
 
 Tracked result directory:

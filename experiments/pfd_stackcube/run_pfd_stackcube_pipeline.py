@@ -19,6 +19,7 @@ import imageio.v2 as imageio
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import torch.nn as nn
 from torch.utils.data import DataLoader
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -33,6 +34,8 @@ from fastwam.models.pfd_small_transformer import StackCubePFDSmallTransformer
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train/evaluate StackCube PFD-small or current-only baseline.")
     parser.add_argument("--variant", choices=["pfd", "baseline"], default="pfd")
+    parser.add_argument("--env-id", default="StackCube-v1")
+    parser.add_argument("--control-mode", default="pd_ee_delta_pos")
     parser.add_argument("--traj-path", default="~/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_ee_delta_pos.physx_cpu.h5")
     parser.add_argument("--run-root", default="runs/pfd_stackcube")
     parser.add_argument("--docs-root", default="docs/pfd_stackcube_results")
@@ -54,10 +57,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--lambda-gt", type=float, default=1.0)
     parser.add_argument("--lambda-res", type=float, default=0.5)
     parser.add_argument("--lambda-teacher", type=float, default=0.1)
+    parser.add_argument("--action-target", choices=["demo", "ppo"], default="demo")
+    parser.add_argument("--ppo-teacher-ckpt", default="")
+    parser.add_argument("--ppo-target-clip", action="store_true")
+    parser.add_argument("--ppo-target-sign-gripper", action="store_true")
+    parser.add_argument("--eval-policy", choices=["model", "ppo", "blend"], default="model")
+    parser.add_argument("--eval-ppo-ckpt", default="")
+    parser.add_argument("--eval-ppo-alpha", type=float, default=1.0)
     parser.add_argument("--eval-episodes", type=int, default=20)
     parser.add_argument("--max-episode-steps", type=int, default=50)
     parser.add_argument("--execute-horizon", type=int, default=1)
+    parser.add_argument("--phase-horizon-steps", type=int, default=0)
     parser.add_argument("--binarize-gripper", action="store_true")
+    parser.add_argument("--no-clip-actions", action="store_true")
     parser.add_argument("--video-fps", type=int, default=20)
     parser.add_argument("--seed", type=int, default=11)
     parser.add_argument("--device", default="cuda:0" if torch.cuda.is_available() else "cpu")
@@ -73,6 +85,38 @@ def set_seed(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+
+
+class PPOActor(nn.Module):
+    """CleanRL-style ManiSkill PPO actor used as a frozen distillation teacher."""
+
+    def __init__(self, obs_dim: int, action_dim: int):
+        super().__init__()
+        self.actor_mean = nn.Sequential(
+            nn.Linear(obs_dim, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256),
+            nn.Tanh(),
+            nn.Linear(256, 256),
+            nn.Tanh(),
+            nn.Linear(256, action_dim),
+        )
+
+    def forward(self, obs: torch.Tensor) -> torch.Tensor:
+        return self.actor_mean(obs)
+
+
+def load_ppo_actor(path: str, obs_dim: int, action_dim: int, device: str) -> PPOActor:
+    if not path:
+        raise ValueError("--ppo-teacher-ckpt is required when --action-target ppo")
+    payload = torch.load(Path(path).expanduser(), map_location="cpu")
+    actor = PPOActor(obs_dim=obs_dim, action_dim=action_dim)
+    actor_state = {k.removeprefix("actor_mean."): v for k, v in payload.items() if k.startswith("actor_mean.")}
+    actor.actor_mean.load_state_dict(actor_state, strict=True)
+    actor.eval().to(device)
+    for param in actor.parameters():
+        param.requires_grad_(False)
+    return actor
 
 
 def scalar(value: Any) -> float:
@@ -185,6 +229,31 @@ def write_csv(path: Path, rows: list[dict[str, float]]) -> None:
         writer.writerows(rows)
 
 
+@torch.no_grad()
+def replace_action_with_ppo_target(
+    batch: dict[str, Any],
+    train_ds: StackCubeStateSequenceDataset,
+    ppo_actor: PPOActor,
+    args: argparse.Namespace,
+) -> dict[str, Any]:
+    obs_seq = batch["obs_seq"]
+    obs_raw = train_ds.denormalize_obs(obs_seq)
+    horizon = batch["action"].shape[1]
+    obs_for_actions = obs_raw[:, :horizon]
+    if obs_for_actions.shape[1] < horizon:
+        pad = obs_for_actions[:, -1:].expand(obs_for_actions.shape[0], horizon - obs_for_actions.shape[1], -1)
+        obs_for_actions = torch.cat([obs_for_actions, pad], dim=1)
+    flat_obs = obs_for_actions.reshape(-1, obs_for_actions.shape[-1]).to(args.device)
+    pred = ppo_actor(flat_obs).reshape(obs_for_actions.shape[0], horizon, -1).cpu()
+    if args.ppo_target_clip:
+        pred = pred.clamp(-1.0, 1.0)
+    if args.ppo_target_sign_gripper:
+        pred[..., -1] = torch.where(pred[..., -1] >= 0, torch.ones_like(pred[..., -1]), -torch.ones_like(pred[..., -1]))
+    batch = dict(batch)
+    batch["action"] = (pred - train_ds.stats["action_mean"]) / train_ds.stats["action_std"]
+    return batch
+
+
 def train(args: argparse.Namespace, model: StackCubePFDSmallTransformer, train_ds: StackCubeStateSequenceDataset, val_ds: StackCubeStateSequenceDataset, run_dir: Path) -> list[dict[str, float]]:
     loader = DataLoader(
         train_ds,
@@ -207,6 +276,7 @@ def train(args: argparse.Namespace, model: StackCubePFDSmallTransformer, train_d
     )
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     scaler = torch.amp.GradScaler("cuda", enabled=args.amp and args.device.startswith("cuda"))
+    ppo_actor = load_ppo_actor(args.ppo_teacher_ckpt, train_ds.obs_dim, train_ds.action_dim, args.device) if args.action_target == "ppo" else None
     history: list[dict[str, float]] = []
     iterator = iter(loader)
     last_t = time.perf_counter()
@@ -217,6 +287,8 @@ def train(args: argparse.Namespace, model: StackCubePFDSmallTransformer, train_d
         except StopIteration:
             iterator = iter(loader)
             batch = next(iterator)
+        if ppo_actor is not None:
+            batch = replace_action_with_ppo_target(batch, train_ds, ppo_actor, args)
         optimizer.zero_grad(set_to_none=True)
         with torch.autocast(device_type="cuda", dtype=torch.float16, enabled=args.amp and args.device.startswith("cuda")):
             loss, metrics = model.training_loss(batch)
@@ -259,14 +331,18 @@ def evaluate(args: argparse.Namespace, model: StackCubePFDSmallTransformer, trai
     import mani_skill.envs  # noqa: F401
 
     env = gym.make(
-        "StackCube-v1",
+        args.env_id,
         obs_mode="state",
-        control_mode="pd_ee_delta_pos",
+        control_mode=args.control_mode,
         render_mode="rgb_array",
         max_episode_steps=args.max_episode_steps,
     )
     low = np.asarray(env.action_space.low, dtype=np.float32).reshape(-1)
     high = np.asarray(env.action_space.high, dtype=np.float32).reshape(-1)
+    ppo_actor = None
+    if args.eval_policy in {"ppo", "blend"}:
+        ppo_path = args.eval_ppo_ckpt or args.ppo_teacher_ckpt
+        ppo_actor = load_ppo_actor(ppo_path, train_ds.obs_dim, train_ds.action_dim, args.device)
     model.eval()
     rows = []
     success_video = None
@@ -284,10 +360,30 @@ def evaluate(args: argparse.Namespace, model: StackCubePFDSmallTransformer, trai
             obs_np = to_numpy_obs(obs)
             obs_tensor = torch.from_numpy(obs_np).to(args.device).float()
             obs_norm = train_ds.normalize_obs(obs_tensor)
-            pred_norm = model.predict_action_chunk(obs_norm)[0]
+            phase_horizon = args.phase_horizon_steps if args.phase_horizon_steps > 0 else args.max_episode_steps
+            phase = torch.arange(
+                steps,
+                steps + args.action_horizon,
+                device=args.device,
+                dtype=torch.float32,
+            ).clamp_max(max(phase_horizon - 1, 1))
+            phase = (phase / max(phase_horizon - 1, 1)).view(1, args.action_horizon, 1)
+            pred_norm = model.predict_action_chunk(obs_norm, action_phase=phase)[0]
             pred_actions = train_ds.denormalize_action(pred_norm).detach().cpu().numpy()
+            if ppo_actor is not None:
+                with torch.no_grad():
+                    ppo_action = ppo_actor(torch.from_numpy(obs_np).to(args.device).float().view(1, -1))[0]
+                ppo_action_np = ppo_action.detach().cpu().numpy().astype(np.float32)
+                if args.eval_policy == "ppo":
+                    pred_actions = ppo_action_np[None, :]
+                else:
+                    alpha = float(np.clip(args.eval_ppo_alpha, 0.0, 1.0))
+                    pred_actions = pred_actions.copy()
+                    pred_actions[0] = (1.0 - alpha) * pred_actions[0] + alpha * ppo_action_np
             for action in pred_actions[: max(1, args.execute_horizon)]:
-                action = np.clip(action.astype(np.float32), low, high)
+                action = action.astype(np.float32)
+                if not args.no_clip_actions:
+                    action = np.clip(action, low, high)
                 if args.binarize_gripper and action.shape[0] > 0:
                     action[-1] = 1.0 if action[-1] >= 0 else -1.0
                 obs, reward, terminated, truncated, info = env.step(action[None, :])
@@ -322,10 +418,13 @@ def evaluate(args: argparse.Namespace, model: StackCubePFDSmallTransformer, trai
     env.close()
     metrics = {
         "variant": args.variant,
-        "env_id": "StackCube-v1",
+        "env_id": args.env_id,
         "obs_mode": "state",
-        "control_mode": "pd_ee_delta_pos",
+        "control_mode": args.control_mode,
         "binarize_gripper": bool(args.binarize_gripper),
+        "clip_actions": not bool(args.no_clip_actions),
+        "eval_policy": args.eval_policy,
+        "eval_ppo_alpha": float(args.eval_ppo_alpha),
         "pfd_teacher_used_at_inference": False,
         "pfd_future_tokens_used_at_inference": False,
         "num_eval_episodes": args.eval_episodes,
@@ -413,7 +512,7 @@ def main() -> None:
     else:
         payload = model.load_checkpoint(str(run_dir / "checkpoint.pt"))
         if "stats" in payload and payload["stats"] is not None:
-            train_ds.stats = payload["stats"]
+            train_ds.stats = train_ds._clone_stats(payload["stats"])
         loss_path = run_dir / "loss_history.csv"
         if loss_path.exists():
             with loss_path.open() as f:

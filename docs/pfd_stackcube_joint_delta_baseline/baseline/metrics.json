@@ -1,0 +1,471 @@
+{
+  "variant": "baseline",
+  "env_id": "StackCube-v1",
+  "obs_mode": "state",
+  "control_mode": "pd_joint_delta_pos",
+  "binarize_gripper": true,
+  "clip_actions": true,
+  "pfd_teacher_used_at_inference": false,
+  "pfd_future_tokens_used_at_inference": false,
+  "num_eval_episodes": 50,
+  "successes": 15,
+  "success_rate": 0.3,
+  "avg_return": 10.313948394060136,
+  "avg_episode_len": 39.82,
+  "avg_is_grasped": 0.86,
+  "avg_is_cubeA_on_cubeB": 0.42,
+  "success_video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/success_episode.mp4",
+  "last_eval_video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_049_fail.mp4",
+  "episodes": [
+    {
+      "episode": 0,
+      "success": 0,
+      "return": 10.000298798084259,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_000_fail.mp4"
+    },
+    {
+      "episode": 1,
+      "success": 0,
+      "return": 14.451402261853218,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_001_fail.mp4"
+    },
+    {
+      "episode": 2,
+      "success": 0,
+      "return": 25.741483464837074,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_002_fail.mp4"
+    },
+    {
+      "episode": 3,
+      "success": 0,
+      "return": 13.730295732617378,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_003_fail.mp4"
+    },
+    {
+      "episode": 4,
+      "success": 0,
+      "return": 14.23760338127613,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_004_fail.mp4"
+    },
+    {
+      "episode": 5,
+      "success": 1,
+      "return": 6.791443884372711,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_005_success.mp4"
+    },
+    {
+      "episode": 6,
+      "success": 0,
+      "return": 13.438096061348915,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_006_fail.mp4"
+    },
+    {
+      "episode": 7,
+      "success": 0,
+      "return": 10.90641775727272,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_007_fail.mp4"
+    },
+    {
+      "episode": 8,
+      "success": 0,
+      "return": 10.814286425709724,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_008_fail.mp4"
+    },
+    {
+      "episode": 9,
+      "success": 1,
+      "return": 5.728931814432144,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_009_success.mp4"
+    },
+    {
+      "episode": 10,
+      "success": 0,
+      "return": 11.128182649612427,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_010_fail.mp4"
+    },
+    {
+      "episode": 11,
+      "success": 0,
+      "return": 5.961085140705109,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_011_fail.mp4"
+    },
+    {
+      "episode": 12,
+      "success": 1,
+      "return": 7.71572245657444,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_012_success.mp4"
+    },
+    {
+      "episode": 13,
+      "success": 0,
+      "return": 7.219191491603851,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_013_fail.mp4"
+    },
+    {
+      "episode": 14,
+      "success": 1,
+      "return": 5.872272372245789,
+      "episode_len": 11,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_014_success.mp4"
+    },
+    {
+      "episode": 15,
+      "success": 0,
+      "return": 9.415329694747925,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_015_fail.mp4"
+    },
+    {
+      "episode": 16,
+      "success": 0,
+      "return": 12.34332238137722,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_016_fail.mp4"
+    },
+    {
+      "episode": 17,
+      "success": 0,
+      "return": 11.064275681972504,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_017_fail.mp4"
+    },
+    {
+      "episode": 18,
+      "success": 1,
+      "return": 10.72989684343338,
+      "episode_len": 25,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_018_success.mp4"
+    },
+    {
+      "episode": 19,
+      "success": 1,
+      "return": 5.723939299583435,
+      "episode_len": 11,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_019_success.mp4"
+    },
+    {
+      "episode": 20,
+      "success": 1,
+      "return": 13.605049058794975,
+      "episode_len": 23,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_020_success.mp4"
+    },
+    {
+      "episode": 21,
+      "success": 1,
+      "return": 7.422298789024353,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_021_success.mp4"
+    },
+    {
+      "episode": 22,
+      "success": 0,
+      "return": 8.887834772467613,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_022_fail.mp4"
+    },
+    {
+      "episode": 23,
+      "success": 0,
+      "return": 14.303783357143402,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_023_fail.mp4"
+    },
+    {
+      "episode": 24,
+      "success": 0,
+      "return": 10.642346784472466,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_024_fail.mp4"
+    },
+    {
+      "episode": 25,
+      "success": 0,
+      "return": 13.712356761097908,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_025_fail.mp4"
+    },
+    {
+      "episode": 26,
+      "success": 0,
+      "return": 14.094945520162582,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_026_fail.mp4"
+    },
+    {
+      "episode": 27,
+      "success": 0,
+      "return": 7.880539238452911,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_027_fail.mp4"
+    },
+    {
+      "episode": 28,
+      "success": 1,
+      "return": 7.493104979395866,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_028_success.mp4"
+    },
+    {
+      "episode": 29,
+      "success": 0,
+      "return": 12.99022190272808,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_029_fail.mp4"
+    },
+    {
+      "episode": 30,
+      "success": 1,
+      "return": 12.8185366243124,
+      "episode_len": 22,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_030_success.mp4"
+    },
+    {
+      "episode": 31,
+      "success": 0,
+      "return": 7.800655767321587,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_031_fail.mp4"
+    },
+    {
+      "episode": 32,
+      "success": 0,
+      "return": 7.899444535374641,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_032_fail.mp4"
+    },
+    {
+      "episode": 33,
+      "success": 0,
+      "return": 10.084256902337074,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_033_fail.mp4"
+    },
+    {
+      "episode": 34,
+      "success": 0,
+      "return": 6.7378755658864975,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_034_fail.mp4"
+    },
+    {
+      "episode": 35,
+      "success": 0,
+      "return": 7.990332767367363,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_035_fail.mp4"
+    },
+    {
+      "episode": 36,
+      "success": 1,
+      "return": 6.705568119883537,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_036_success.mp4"
+    },
+    {
+      "episode": 37,
+      "success": 1,
+      "return": 9.420651942491531,
+      "episode_len": 21,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_037_success.mp4"
+    },
+    {
+      "episode": 38,
+      "success": 0,
+      "return": 11.919877544045448,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_038_fail.mp4"
+    },
+    {
+      "episode": 39,
+      "success": 1,
+      "return": 8.31756004691124,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_039_success.mp4"
+    },
+    {
+      "episode": 40,
+      "success": 1,
+      "return": 6.479150339961052,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_040_success.mp4"
+    },
+    {
+      "episode": 41,
+      "success": 0,
+      "return": 11.882512971758842,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_041_fail.mp4"
+    },
+    {
+      "episode": 42,
+      "success": 0,
+      "return": 7.693829715251923,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_042_fail.mp4"
+    },
+    {
+      "episode": 43,
+      "success": 0,
+      "return": 7.241268262267113,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_043_fail.mp4"
+    },
+    {
+      "episode": 44,
+      "success": 0,
+      "return": 16.96264524757862,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_044_fail.mp4"
+    },
+    {
+      "episode": 45,
+      "success": 0,
+      "return": 15.170000538229942,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_045_fail.mp4"
+    },
+    {
+      "episode": 46,
+      "success": 0,
+      "return": 10.066890701651573,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_046_fail.mp4"
+    },
+    {
+      "episode": 47,
+      "success": 1,
+      "return": 7.251344099640846,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_047_success.mp4"
+    },
+    {
+      "episode": 48,
+      "success": 0,
+      "return": 5.472559034824371,
+      "episode_len": 50,
+      "is_grasped": 0,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_048_fail.mp4"
+    },
+    {
+      "episode": 49,
+      "success": 0,
+      "return": 13.736500218510628,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_joint_delta_baseline/baseline/videos/episode_049_fail.mp4"
+    }
+  ]
+}

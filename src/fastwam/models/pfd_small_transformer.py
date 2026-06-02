@@ -111,6 +111,7 @@ class StackCubePFDSmallTransformer(nn.Module):
 
         self.state_proj = nn.Linear(self.obs_dim, hidden_dim)
         self.action_proj = nn.Linear(self.action_dim, hidden_dim)
+        self.phase_proj = nn.Linear(1, hidden_dim)
         self.type_embed = nn.Parameter(torch.randn(2, hidden_dim) * 0.02)
         self.pos_embed = nn.Parameter(torch.randn(self.num_state_tokens + self.action_horizon, hidden_dim) * 0.02)
         self.blocks = nn.ModuleList(
@@ -125,6 +126,7 @@ class StackCubePFDSmallTransformer(nn.Module):
             {
                 "state_proj": self.state_proj,
                 "action_proj": self.action_proj,
+                "phase_proj": self.phase_proj,
                 "blocks": self.blocks,
                 "norm": self.norm,
                 "action_head": self.action_head,
@@ -147,14 +149,33 @@ class StackCubePFDSmallTransformer(nn.Module):
             mask[action_rows, future_state_cols] = True
         return mask
 
-    def _encode_tokens(self, obs_seq: torch.Tensor, action_tokens: torch.Tensor) -> torch.Tensor:
+    def _encode_tokens(
+        self,
+        obs_seq: torch.Tensor,
+        action_tokens: torch.Tensor,
+        state_phase: torch.Tensor | None = None,
+        action_phase: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         state_tokens = self.state_proj(obs_seq) + self.type_embed[0]
         action_tokens = self.action_proj(action_tokens) + self.type_embed[1]
+        if state_phase is None:
+            state_phase = torch.zeros((*obs_seq.shape[:2], 1), device=obs_seq.device, dtype=obs_seq.dtype)
+        if action_phase is None:
+            action_phase = torch.zeros((*action_tokens.shape[:2], 1), device=action_tokens.device, dtype=action_tokens.dtype)
+        state_tokens = state_tokens + self.phase_proj(state_phase)
+        action_tokens = action_tokens + self.phase_proj(action_phase)
         tokens = torch.cat([state_tokens, action_tokens], dim=1)
         return tokens + self.pos_embed[None, :, :]
 
-    def _forward_masked(self, obs_seq: torch.Tensor, action_tokens: torch.Tensor, teacher: bool) -> dict[str, torch.Tensor]:
-        x = self._encode_tokens(obs_seq, action_tokens)
+    def _forward_masked(
+        self,
+        obs_seq: torch.Tensor,
+        action_tokens: torch.Tensor,
+        teacher: bool,
+        state_phase: torch.Tensor | None = None,
+        action_phase: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        x = self._encode_tokens(obs_seq, action_tokens, state_phase=state_phase, action_phase=action_phase)
         mask = self._attention_mask(teacher=teacher, device=x.device)
         for block in self.blocks:
             x = block(x, attn_mask=mask)
@@ -166,8 +187,22 @@ class StackCubePFDSmallTransformer(nn.Module):
             "pred_state": self.state_head(state_x[:, 1:]),
         }
 
-    def forward(self, obs_seq: torch.Tensor, action_tokens: torch.Tensor, tau: torch.Tensor, teacher: bool = False) -> dict[str, torch.Tensor]:
-        out = self._forward_masked(obs_seq, action_tokens, teacher=teacher)
+    def forward(
+        self,
+        obs_seq: torch.Tensor,
+        action_tokens: torch.Tensor,
+        tau: torch.Tensor,
+        teacher: bool = False,
+        state_phase: torch.Tensor | None = None,
+        action_phase: torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        out = self._forward_masked(
+            obs_seq,
+            action_tokens,
+            teacher=teacher,
+            state_phase=state_phase,
+            action_phase=action_phase,
+        )
         if teacher:
             return out
         v_base = out["pred_action"]
@@ -180,17 +215,35 @@ class StackCubePFDSmallTransformer(nn.Module):
     def training_loss(self, sample: dict[str, Any]) -> tuple[torch.Tensor, dict[str, torch.Tensor]]:
         obs_seq = sample["obs_seq"].to(self.device, dtype=self.torch_dtype, non_blocking=True)
         action = sample["action"].to(self.device, dtype=self.torch_dtype, non_blocking=True)
+        state_phase = sample.get("state_phase")
+        action_phase = sample.get("action_phase")
+        state_phase = None if state_phase is None else state_phase.to(self.device, dtype=self.torch_dtype, non_blocking=True)
+        action_phase = None if action_phase is None else action_phase.to(self.device, dtype=self.torch_dtype, non_blocking=True)
         batch = action.shape[0]
         tau = torch.zeros(batch, device=self.device, dtype=self.torch_dtype)
         action_tokens = torch.zeros_like(action)
 
-        student = self.forward(obs_seq, action_tokens, tau=tau, teacher=False)
+        student = self.forward(
+            obs_seq,
+            action_tokens,
+            tau=tau,
+            teacher=False,
+            state_phase=state_phase,
+            action_phase=action_phase,
+        )
         loss_video = F.mse_loss(student["pred_state"].float(), obs_seq[:, 1:].float())
         loss_gt = F.mse_loss(student["v_final"].float(), action.float())
 
         if self.use_pfd:
             with torch.no_grad():
-                teacher = self.forward(obs_seq, action_tokens, tau=tau, teacher=True)
+                teacher = self.forward(
+                    obs_seq,
+                    action_tokens,
+                    tau=tau,
+                    teacher=True,
+                    state_phase=state_phase,
+                    action_phase=action_phase,
+                )
                 v_teacher = teacher["pred_action"].detach()
                 residual_target = (v_teacher - student["v_base"]).detach()
             loss_res = F.mse_loss(student["delta_hat"].float(), residual_target.float())
@@ -219,15 +272,28 @@ class StackCubePFDSmallTransformer(nn.Module):
         return loss_total, metrics
 
     @torch.no_grad()
-    def predict_action_chunk(self, obs: torch.Tensor) -> torch.Tensor:
+    def predict_action_chunk(self, obs: torch.Tensor, action_phase: torch.Tensor | None = None) -> torch.Tensor:
         if obs.ndim == 1:
             obs = obs.unsqueeze(0)
         obs = obs.to(self.device, dtype=self.torch_dtype)
         obs_seq = torch.zeros((obs.shape[0], self.num_state_tokens, self.obs_dim), device=self.device, dtype=self.torch_dtype)
         obs_seq[:, 0] = obs
         action_tokens = torch.zeros((obs.shape[0], self.action_horizon, self.action_dim), device=self.device, dtype=self.torch_dtype)
+        state_phase = torch.zeros((obs.shape[0], self.num_state_tokens, 1), device=self.device, dtype=self.torch_dtype)
+        if action_phase is None:
+            action_phase = torch.zeros((obs.shape[0], self.action_horizon, 1), device=self.device, dtype=self.torch_dtype)
+        elif action_phase.ndim == 2:
+            action_phase = action_phase.unsqueeze(0)
+        action_phase = action_phase.to(self.device, dtype=self.torch_dtype)
         tau = torch.zeros(obs.shape[0], device=self.device, dtype=self.torch_dtype)
-        return self.forward(obs_seq, action_tokens, tau=tau, teacher=False)["v_final"]
+        return self.forward(
+            obs_seq,
+            action_tokens,
+            tau=tau,
+            teacher=False,
+            state_phase=state_phase,
+            action_phase=action_phase,
+        )["v_final"]
 
     def save_checkpoint(self, path: str, stats: dict[str, torch.Tensor] | None = None, step: int | None = None) -> str:
         path_obj = Path(path)
@@ -243,6 +309,7 @@ class StackCubePFDSmallTransformer(nn.Module):
                     "action_horizon": self.action_horizon,
                     "state_horizon": self.state_horizon,
                     "hidden_dim": self.hidden_dim,
+                    "phase_conditioned": True,
                     "use_pfd": self.use_pfd,
                     "lambda_video": self.lambda_video,
                     "lambda_gt": self.lambda_gt,

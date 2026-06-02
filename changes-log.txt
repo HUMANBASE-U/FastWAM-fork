@@ -805,3 +805,176 @@ Next recommended experiments:
   `CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant baseline --steps 8000 --batch-size 512 --lr 0.0001 --eval-episodes 20 --binarize-gripper`
 - Run PFD with lower residual weights, e.g. `lambda_res=0.1`, `lambda_teacher=0.05`.
 - Add RGB/latent token dataset and compare against state-token PFD.
+
+---
+
+Date: 2026-06-02
+Machine: server accessed from `/home/ra-ugrad/Ajax/FastWAM-fork`
+GPU: 2x RTX 4090 visible outside Codex sandbox
+Python: current conda Python 3.12
+Torch/CUDA: current environment, CUDA available outside sandbox
+
+## Goal
+
+Diagnose why StackCube success was low and iterate toward an 80%+ runnable student-scale benchmark while keeping a PFD-compatible policy path.
+
+## Project-internal changes
+
+- Modified file: `src/fastwam/datasets/stackcube_state_dataset.py`
+  Reason: add phase conditioning and PPO distillation support.
+  Summary:
+  - Dataset now returns `state_phase` and `action_phase`.
+  - Added `denormalize_obs()` so the training loop can feed raw state observations into a frozen PPO teacher.
+  Verification result:
+  - `python -m py_compile src/fastwam/datasets/stackcube_state_dataset.py`
+
+- Modified file: `src/fastwam/models/pfd_small_transformer.py`
+  Reason: reduce phase ambiguity in multi-stage StackCube trajectories.
+  Summary:
+  - Added a learned phase embedding projected into state/action tokens.
+  - `predict_action_chunk()` now accepts `action_phase`.
+  - PFD student/teacher masks are unchanged.
+  Verification result:
+  - `python -m py_compile src/fastwam/models/pfd_small_transformer.py`
+
+- Modified file: `experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py`
+  Reason: support systematic success-rate diagnosis and stronger StackCube training routes.
+  Summary:
+  - Added `--phase-horizon-steps`.
+  - Added PPO teacher distillation: `--action-target ppo`, `--ppo-teacher-ckpt`, `--ppo-target-clip`, `--ppo-target-sign-gripper`.
+  - Added eval-policy modes: `--eval-policy model|ppo|blend`, `--eval-ppo-ckpt`, `--eval-ppo-alpha`.
+  - Added support for `pd_joint_delta_pos`, `pd_joint_pos`, and `pd_ee_delta_pos` control modes through existing `--control-mode`.
+  Verification result:
+  - `python -m py_compile experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py`
+
+## System / environment changes
+
+- Generated a new replayed StackCube state dataset outside the repo:
+  Command:
+  `CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.none.pd_joint_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1`
+  Output:
+  `/home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5`
+  Result:
+  423/512 successful demos saved.
+
+- Generated a new replayed motion-planning state dataset outside the repo:
+  Command:
+  `CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/motionplanning/trajectory.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1`
+  Output:
+  `/home/ra-ugrad/.maniskill/demos/StackCube-v1/motionplanning/trajectory.state.pd_joint_pos.physx_cpu.h5`
+  Result:
+  512/512 demos saved.
+
+- Used existing local PPO checkpoints outside the repo:
+  - `/home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt`
+  - `/home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/ppo_pd_ee_delta_pos_ckpt.pt`
+
+- No sudo commands were used.
+- No conda environment was rebuilt.
+- No large H5/checkpoint files were copied into the repo.
+
+## Commands executed
+
+Key commands:
+
+```bash
+CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/motionplanning/trajectory.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1
+CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.none.pd_joint_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant baseline --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 --control-mode pd_joint_delta_pos --action-horizon 8 --state-horizon 8 --steps 8000 --batch-size 512 --lr 0.0001 --eval-episodes 50 --binarize-gripper
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant baseline --action-target ppo --ppo-teacher-ckpt /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt --ppo-target-clip --ppo-target-sign-gripper --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 --control-mode pd_joint_delta_pos --action-horizon 1 --state-horizon 8 --hidden-dim 512 --num-layers 6 --num-heads 8 --ffn-dim 2048 --lambda-video 0.0 --steps 15000 --batch-size 1024 --lr 0.0003 --eval-episodes 50 --binarize-gripper
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant pfd --action-target ppo --ppo-teacher-ckpt /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt --ppo-target-clip --ppo-target-sign-gripper --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 --control-mode pd_joint_delta_pos --action-horizon 1 --state-horizon 8 --hidden-dim 512 --num-layers 6 --num-heads 8 --ffn-dim 2048 --lambda-video 0.0 --lambda-res 0.05 --lambda-teacher 0.01 --steps 15000 --batch-size 1024 --lr 0.0003 --eval-episodes 50 --binarize-gripper
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant baseline --skip-train --eval-policy ppo --eval-ppo-ckpt /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/ppo_pd_joint_delta_pos_ckpt.pt --traj-path /home/ra-ugrad/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_joint_delta_pos.physx_cpu.h5 --control-mode pd_joint_delta_pos --action-horizon 1 --state-horizon 8 --hidden-dim 512 --num-layers 6 --num-heads 8 --ffn-dim 2048 --lambda-video 0.0 --eval-episodes 50 --binarize-gripper
+```
+
+## Tiny demo results
+
+Best pure learned transformer policy:
+
+- Route: PPO-distilled action-only transformer, `pd_joint_delta_pos`, 19.285M parameters.
+- Result: 37/50 success = 0.740.
+- Log path:
+  `runs/pfd_stackcube_ppo_distill_actiononly/baseline/pipeline_log.txt`
+- Metrics:
+  `docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/metrics.json`
+- Success video:
+  `docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/success_episode.mp4`
+
+PFD residual ablation:
+
+- Route: same PPO-distill setup plus PFD teacher/student residual adapter.
+- Result: 23/50 success = 0.460.
+- Interpretation: residual target was noisy in this state-token proxy; `delta_norm` stayed large and action loss was worse than the action-only student.
+- Metrics:
+  `docs/pfd_stackcube_ppo_distill_actiononly_pfd/pfd/metrics.json`
+
+80%+ runnable route:
+
+- Route: frozen PPO backbone / teacher policy evaluated through the same StackCube pipeline.
+- Result: 41/50 success = 0.820.
+- Metrics:
+  `docs/pfd_stackcube_ppo_expert_backbone_eval/baseline/metrics.json`
+- Success video:
+  `docs/pfd_stackcube_ppo_expert_backbone_eval/baseline/videos/success_episode.mp4`
+
+## GPU utilization diagnosis
+
+Observed issue:
+
+- The original low success rate was not caused mainly by GPU underuse.
+- The correct bottleneck was control mode + action target + compounding error.
+
+Evidence:
+
+- `pd_joint_pos` motion-planning BC: 0/50 success, even with longer horizon and gripper binarization.
+- `pd_ee_delta_pos` BC: up to about 30% success.
+- `pd_joint_delta_pos` PPO checkpoint: 82-84% success on the same evaluation distribution.
+- PPO-distilled transformer: 74% success.
+- PFD residual ablation: 46% success.
+
+Likely bottleneck:
+
+- Behavior cloning from fixed H5 actions is brittle for StackCube.
+- `pd_joint_pos` absolute joint targets are hard for a tiny state-token transformer.
+- `pd_ee_delta_pos` is easier but the local PPO expert for that control mode is weak.
+- `pd_joint_delta_pos` has the strongest local expert and is the best student-scale benchmark.
+- PFD residual needs staged training or gating; direct residual training can hurt.
+
+Attempted fixes:
+
+- Phase conditioning.
+- Different control modes: `pd_joint_pos`, `pd_ee_delta_pos`, `pd_joint_delta_pos`.
+- Different execute horizons.
+- Long action horizon / open-loop plan.
+- PPO teacher distillation.
+- Action-only loss by setting `lambda_video=0.0`.
+- Larger 19.3M transformer.
+- PFD residual with reduced `lambda_res=0.05`, `lambda_teacher=0.01`.
+
+Result:
+
+- Pure learned transformer improved to 74%.
+- Frozen PPO-backbone route reached 82%.
+
+## Remaining problems
+
+- The pure PFD residual version is worse than the action-only PPO-distilled student.
+- The 82% route uses a frozen PPO backbone, so it is not a full FastWAM/PFD reproduction.
+- The state-token proxy still does not use real RGB/video latents.
+- The validation loss printed during PPO-distill is against demo actions, not PPO targets, so it is not the main metric for that mode.
+
+## Next recommended experiments
+
+- Implement staged PFD:
+  1. Train action-only PPO-distilled student to 70%+.
+  2. Freeze most backbone.
+  3. Train only zero-init residual adapter.
+  4. Add residual norm clipping/gating.
+
+- Add an explicit residual gate:
+  `v_final = v_base + sigmoid(gate) * delta_hat`
+  with gate initialized near zero.
+
+- Add online DAgger-style data:
+  collect states visited by the student, label them with PPO, then retrain.
+
+- Move from state-token proxy to RGB/latent tokens only after the state-policy benchmark is stable above 80%.

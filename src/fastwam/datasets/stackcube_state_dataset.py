@@ -110,14 +110,22 @@ class StackCubeStateSequenceDataset(Dataset):
     def __getitem__(self, idx: int) -> dict[str, Any]:
         traj_idx, step = self.indices[idx]
         traj = self.trajectories[traj_idx]
+        action_len = traj["actions"].shape[0]
+        phase_denom = max(action_len - 1, 1)
         obs_seq = torch.from_numpy(traj["obs"][step : step + 1 + self.state_horizon]).float()
         action = torch.from_numpy(traj["actions"][step : step + self.action_horizon]).float()
+        state_phase = torch.arange(step, step + 1 + self.state_horizon, dtype=torch.float32).clamp_max(phase_denom)
+        state_phase = (state_phase / phase_denom).unsqueeze(-1)
+        action_phase = torch.arange(step, step + self.action_horizon, dtype=torch.float32).clamp_max(phase_denom)
+        action_phase = (action_phase / phase_denom).unsqueeze(-1)
         if self.normalize:
             obs_seq = (obs_seq - self.stats["obs_mean"]) / self.stats["obs_std"]
             action = (action - self.stats["action_mean"]) / self.stats["action_std"]
         return {
             "obs_seq": obs_seq,
             "action": action,
+            "state_phase": state_phase,
+            "action_phase": action_phase,
             "metadata": {
                 "traj_key": traj["key"],
                 "step": step,
@@ -131,6 +139,13 @@ class StackCubeStateSequenceDataset(Dataset):
         mean = self.stats["obs_mean"].to(obs.device, obs.dtype)
         std = self.stats["obs_std"].to(obs.device, obs.dtype)
         return (obs - mean) / std
+
+    def denormalize_obs(self, obs: torch.Tensor) -> torch.Tensor:
+        if not self.normalize:
+            return obs
+        mean = self.stats["obs_mean"].to(obs.device, obs.dtype)
+        std = self.stats["obs_std"].to(obs.device, obs.dtype)
+        return obs * std + mean
 
     def denormalize_action(self, action: torch.Tensor) -> torch.Tensor:
         if not self.normalize:

@@ -1,0 +1,471 @@
+{
+  "variant": "baseline",
+  "env_id": "StackCube-v1",
+  "obs_mode": "state",
+  "control_mode": "pd_joint_delta_pos",
+  "binarize_gripper": true,
+  "clip_actions": true,
+  "pfd_teacher_used_at_inference": false,
+  "pfd_future_tokens_used_at_inference": false,
+  "num_eval_episodes": 50,
+  "successes": 37,
+  "success_rate": 0.74,
+  "avg_return": 11.064733184278012,
+  "avg_episode_len": 25.24,
+  "avg_is_grasped": 1.0,
+  "avg_is_cubeA_on_cubeB": 0.86,
+  "success_video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/success_episode.mp4",
+  "last_eval_video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_049_success.mp4",
+  "episodes": [
+    {
+      "episode": 0,
+      "success": 0,
+      "return": 27.21248422563076,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_000_fail.mp4"
+    },
+    {
+      "episode": 1,
+      "success": 0,
+      "return": 20.381249144673347,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_001_fail.mp4"
+    },
+    {
+      "episode": 2,
+      "success": 1,
+      "return": 8.661113664507866,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_002_success.mp4"
+    },
+    {
+      "episode": 3,
+      "success": 1,
+      "return": 8.788438439369202,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_003_success.mp4"
+    },
+    {
+      "episode": 4,
+      "success": 1,
+      "return": 8.839363604784012,
+      "episode_len": 20,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_004_success.mp4"
+    },
+    {
+      "episode": 5,
+      "success": 1,
+      "return": 6.788200363516808,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_005_success.mp4"
+    },
+    {
+      "episode": 6,
+      "success": 1,
+      "return": 10.097672194242477,
+      "episode_len": 23,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_006_success.mp4"
+    },
+    {
+      "episode": 7,
+      "success": 0,
+      "return": 21.846901521086693,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_007_fail.mp4"
+    },
+    {
+      "episode": 8,
+      "success": 1,
+      "return": 7.095603927969933,
+      "episode_len": 15,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_008_success.mp4"
+    },
+    {
+      "episode": 9,
+      "success": 1,
+      "return": 5.729911595582962,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_009_success.mp4"
+    },
+    {
+      "episode": 10,
+      "success": 1,
+      "return": 8.191728189587593,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_010_success.mp4"
+    },
+    {
+      "episode": 11,
+      "success": 0,
+      "return": 10.800325587391853,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_011_fail.mp4"
+    },
+    {
+      "episode": 12,
+      "success": 1,
+      "return": 6.73797670006752,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_012_success.mp4"
+    },
+    {
+      "episode": 13,
+      "success": 1,
+      "return": 18.02268147468567,
+      "episode_len": 30,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_013_success.mp4"
+    },
+    {
+      "episode": 14,
+      "success": 1,
+      "return": 6.704189673066139,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_014_success.mp4"
+    },
+    {
+      "episode": 15,
+      "success": 0,
+      "return": 16.298330575227737,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_015_fail.mp4"
+    },
+    {
+      "episode": 16,
+      "success": 1,
+      "return": 6.45810142159462,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_016_success.mp4"
+    },
+    {
+      "episode": 17,
+      "success": 1,
+      "return": 8.273462116718292,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_017_success.mp4"
+    },
+    {
+      "episode": 18,
+      "success": 1,
+      "return": 10.922936156392097,
+      "episode_len": 24,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_018_success.mp4"
+    },
+    {
+      "episode": 19,
+      "success": 1,
+      "return": 4.723947748541832,
+      "episode_len": 10,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_019_success.mp4"
+    },
+    {
+      "episode": 20,
+      "success": 1,
+      "return": 7.726293981075287,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_020_success.mp4"
+    },
+    {
+      "episode": 21,
+      "success": 1,
+      "return": 7.378920689225197,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_021_success.mp4"
+    },
+    {
+      "episode": 22,
+      "success": 1,
+      "return": 6.055909752845764,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_022_success.mp4"
+    },
+    {
+      "episode": 23,
+      "success": 1,
+      "return": 7.125944226980209,
+      "episode_len": 15,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_023_success.mp4"
+    },
+    {
+      "episode": 24,
+      "success": 1,
+      "return": 6.495026618242264,
+      "episode_len": 12,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_024_success.mp4"
+    },
+    {
+      "episode": 25,
+      "success": 0,
+      "return": 27.53081214427948,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_025_fail.mp4"
+    },
+    {
+      "episode": 26,
+      "success": 0,
+      "return": 19.63714900612831,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_026_fail.mp4"
+    },
+    {
+      "episode": 27,
+      "success": 0,
+      "return": 28.329980045557022,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_027_fail.mp4"
+    },
+    {
+      "episode": 28,
+      "success": 1,
+      "return": 7.75538344681263,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_028_success.mp4"
+    },
+    {
+      "episode": 29,
+      "success": 0,
+      "return": 20.403542190790176,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_029_fail.mp4"
+    },
+    {
+      "episode": 30,
+      "success": 1,
+      "return": 9.862246304750443,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_030_success.mp4"
+    },
+    {
+      "episode": 31,
+      "success": 0,
+      "return": 11.63553974032402,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_031_fail.mp4"
+    },
+    {
+      "episode": 32,
+      "success": 1,
+      "return": 9.3235122859478,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_032_success.mp4"
+    },
+    {
+      "episode": 33,
+      "success": 0,
+      "return": 22.34417787194252,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_033_fail.mp4"
+    },
+    {
+      "episode": 34,
+      "success": 0,
+      "return": 13.368261903524399,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_034_fail.mp4"
+    },
+    {
+      "episode": 35,
+      "success": 0,
+      "return": 16.234241351485252,
+      "episode_len": 50,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 0,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_035_fail.mp4"
+    },
+    {
+      "episode": 36,
+      "success": 1,
+      "return": 5.560874193906784,
+      "episode_len": 11,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_036_success.mp4"
+    },
+    {
+      "episode": 37,
+      "success": 1,
+      "return": 8.442438215017319,
+      "episode_len": 20,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_037_success.mp4"
+    },
+    {
+      "episode": 38,
+      "success": 1,
+      "return": 10.135034963488579,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_038_success.mp4"
+    },
+    {
+      "episode": 39,
+      "success": 1,
+      "return": 8.184954807162285,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_039_success.mp4"
+    },
+    {
+      "episode": 40,
+      "success": 1,
+      "return": 6.747701808810234,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_040_success.mp4"
+    },
+    {
+      "episode": 41,
+      "success": 1,
+      "return": 7.4160409569740295,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_041_success.mp4"
+    },
+    {
+      "episode": 42,
+      "success": 1,
+      "return": 7.457905992865562,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_042_success.mp4"
+    },
+    {
+      "episode": 43,
+      "success": 1,
+      "return": 7.3031789511442184,
+      "episode_len": 16,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_043_success.mp4"
+    },
+    {
+      "episode": 44,
+      "success": 1,
+      "return": 5.63862182199955,
+      "episode_len": 13,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_044_success.mp4"
+    },
+    {
+      "episode": 45,
+      "success": 1,
+      "return": 6.143946647644043,
+      "episode_len": 14,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_045_success.mp4"
+    },
+    {
+      "episode": 46,
+      "success": 1,
+      "return": 8.871183946728706,
+      "episode_len": 18,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_046_success.mp4"
+    },
+    {
+      "episode": 47,
+      "success": 1,
+      "return": 8.03375069797039,
+      "episode_len": 17,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_047_success.mp4"
+    },
+    {
+      "episode": 48,
+      "success": 1,
+      "return": 9.336186438798904,
+      "episode_len": 19,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_048_success.mp4"
+    },
+    {
+      "episode": 49,
+      "success": 1,
+      "return": 10.183279886841774,
+      "episode_len": 23,
+      "is_grasped": 1,
+      "is_cubeA_on_cubeB": 1,
+      "video": "docs/pfd_stackcube_ppo_distill_actiononly_baseline/baseline/videos/episode_049_success.mp4"
+    }
+  ]
+}
