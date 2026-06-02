@@ -641,3 +641,167 @@ Next recommended experiments:
 - Baseline ablation: `lambda_future=0.0` action-only vs `lambda_future=0.2` action+future-state auxiliary.
 - Visual upgrade: replace state input with RGB observations while keeping the same no-imagination inference route.
 - IDM proxy: predict future latent first, then decode action from future latent, and compare success rate to the current action-head-only inference.
+
+## 2026-06-02 PFD StackCube-small reproduction
+
+Date:
+
+- 2026-06-02 America/Denver
+
+Machine / environment:
+
+- Python: 3.12.7
+- Torch: 2.6.0+cu124
+- CUDA from PyTorch: 12.4
+- ManiSkill: 3.0.1
+- GPU outside Codex sandbox: 2 x NVIDIA GeForce RTX 4090, 24564 MiB each
+- Driver: 535.171.04
+- Important note: default Codex sandbox still reports `torch.cuda.is_available() == False`; escalated execution sees both RTX 4090 GPUs and was used for replay/training/evaluation.
+
+Goal:
+
+- Implement a small PFD reproduction on a harder task than PickCube: ManiSkill `StackCube-v1`.
+- Use open ManiSkill demonstrations instead of LIBERO/RoboTwin full datasets.
+- Reproduce the core PFD mechanism: shared teacher/student backbone, two masks, stop-gradient teacher, residual adapter, and current-only inference.
+- Do not run full paper-scale Wan/Fast-WAM training.
+
+Project-internal changes:
+
+- Added file: `src/fastwam/datasets/stackcube_state_dataset.py`
+  Reason: load replayed StackCube state/action demonstrations.
+  Summary: returns normalized `obs_seq` `[state_horizon+1, 48]` and action chunks `[action_horizon, 4]`.
+  Verification result: loaded 506 replayed trajectories, 19187 train chunks, 2162 val chunks.
+
+- Added file: `src/fastwam/models/pfd_small_transformer.py`
+  Reason: implement a small PFD proxy model.
+  Summary: shared transformer backbone with student mask and teacher mask; residual adapter with zero-initialized output; current-only `predict_action_chunk()` inference path.
+  Verification result: smoke test passed; initial `delta_norm` was 0.00000, then adapter began learning.
+
+- Added files:
+  - `configs/pfd_small.yaml`
+  - `configs/fastwam_baseline_small.yaml`
+  Reason: document PFD-small and current-only baseline configs.
+
+- Added files:
+  - `experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py`
+  - `experiments/pfd_stackcube/train_pfd.py`
+  - `experiments/pfd_stackcube/eval_pfd.py`
+  - `scripts/run_pfd_stackcube.sh`
+  Reason: train/evaluate StackCube PFD-small and save metrics/videos/plots.
+
+- Added file: `README_PFD_REPRO.md`
+  Reason: explain how to run and interpret this PFD reproduction.
+
+- Added directory: `docs/pfd_stackcube_results_binarized/pfd/`
+  Reason: track lightweight result artifacts in GitHub.
+  Summary: includes loss curves, metrics, GPU profile summary, eval videos, and experiment report.
+  Verification result: result directory is about 1.3M.
+
+System / environment changes:
+
+- Downloaded ManiSkill StackCube demonstrations outside the repo:
+  `python -m mani_skill.utils.download_demo StackCube-v1`
+  Location:
+  `~/.maniskill/demos/StackCube-v1/`
+  Approximate local size:
+  `103M`
+
+- Generated replayed state-observation StackCube file outside the repo:
+  `~/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_ee_delta_pos.physx_cpu.h5`
+  Command:
+  `CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path ~/.maniskill/demos/StackCube-v1/rl/trajectory.none.pd_ee_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1`
+  Result:
+  506/512 demonstrations saved; 6 episodes failed replay and were skipped.
+
+- Used environment variable:
+  `CUDA_VISIBLE_DEVICES=0`
+  Reason:
+  restrict training/evaluation to one RTX 4090; this PFD-small model is not large enough to benefit from two-GPU communication.
+
+- Used background `nvidia-smi` GPU profiling:
+  Output copied into:
+  `docs/pfd_stackcube_results_binarized/pfd/gpu_profile.csv`
+
+- No sudo commands were used.
+- No conda environment was rebuilt.
+- No large dataset/checkpoint was added to Git.
+
+Commands executed:
+
+```bash
+python -m mani_skill.utils.download_demo StackCube-v1
+CUDA_VISIBLE_DEVICES=0 python -m mani_skill.trajectory.replay_trajectory --traj-path ~/.maniskill/demos/StackCube-v1/rl/trajectory.none.pd_ee_delta_pos.physx_cuda.h5 --sim-backend physx_cpu -o state --save-traj --use-env-states --count 512 --num-envs 1
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant pfd --steps 2 --batch-size 32 --num-workers 0 --max-trajectories 32 --skip-eval --run-root runs/pfd_stackcube_smoke --docs-root docs/pfd_stackcube_results_smoke --device cuda:0 --lr 0.0001
+bash -lc 'mkdir -p runs/pfd_stackcube/pfd; nvidia-smi --query-gpu=timestamp,index,utilization.gpu,utilization.memory,memory.used,power.draw --format=csv -l 1 > runs/pfd_stackcube/pfd/gpu_profile.csv & MON=$!; env CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant pfd --amp --steps 8000 --batch-size 512 --num-workers 2 --lr 0.0001 --eval-episodes 20 --run-root runs/pfd_stackcube --docs-root docs/pfd_stackcube_results --device cuda:0 | tee runs/pfd_stackcube/pfd/pipeline_log.txt; STATUS=${PIPESTATUS[0]}; kill $MON 2>/dev/null || true; exit $STATUS'
+CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant pfd --skip-train --eval-episodes 20 --run-root runs/pfd_stackcube --docs-root docs/pfd_stackcube_results_binarized --device cuda:0 --binarize-gripper
+```
+
+PFD StackCube-small results:
+
+```text
+model: StackCubePFDSmallTransformer
+parameters: 8.633M
+task: ManiSkill StackCube-v1
+obs_mode: state
+control_mode: pd_ee_delta_pos
+action space: 4D [dx, dy, dz, gripper]
+training steps: 8000
+batch size: 512
+learning rate: 1e-4
+train chunks: 19187
+val chunks: 2162
+final train loss: 0.18483
+final gt/action loss: 0.09439
+final video/state-token loss: 0.00333
+final weighted residual loss: 0.07259
+final weighted teacher loss: 0.01452
+final val loss: 0.14542
+raw continuous-gripper eval: 0/20 success
+binarized-gripper eval: 2/20 success
+binarized success rate: 0.10
+success video: docs/pfd_stackcube_results_binarized/pfd/videos/success_episode.mp4
+last eval video: docs/pfd_stackcube_results_binarized/pfd/videos/episode_019_fail.mp4
+```
+
+GPU utilization diagnosis:
+
+```text
+GPU 0 avg util: 34.42%
+GPU 0 max util: 51.00%
+GPU 0 avg memory used: 1801.75 MiB
+GPU 0 max memory used: 2057 MiB
+GPU 1 avg util: 0.00%
+```
+
+Observed issue:
+
+- StackCube success rate is low, but the policy does sometimes grasp and place cubeA on cubeB.
+- Raw continuous gripper often fails final success/static condition; binarizing gripper improves strict success to 2/20.
+
+Likely bottleneck:
+
+- This is a state-token proxy rather than full visual PFD.
+- The residual target is noisy; `delta_norm` and residual loss fluctuate.
+- StackCube requires correct release/static timing, so continuous gripper regression is brittle.
+- No current-only baseline was run yet in this pass.
+
+Result:
+
+- PFD mechanism is implemented and runnable.
+- Current-only inference is enforced: teacher/future tokens are not used in evaluation.
+- At least one success video was generated.
+- This is a first runnable PFD benchmark, not a strong final StackCube policy.
+
+Remaining problems:
+
+- Need baseline ablation for current-only no-PFD model.
+- Need visual/RGB latent upgrade to reduce state shortcut.
+- Need tune PFD residual weights or add staged adapter training.
+- Need eventually connect PFD to original Fast-WAM partial fine-tuning: adapter + last 1-2 action/video blocks.
+
+Next recommended experiments:
+
+- Run baseline:
+  `CUDA_VISIBLE_DEVICES=0 python experiments/pfd_stackcube/run_pfd_stackcube_pipeline.py --variant baseline --steps 8000 --batch-size 512 --lr 0.0001 --eval-episodes 20 --binarize-gripper`
+- Run PFD with lower residual weights, e.g. `lambda_res=0.1`, `lambda_teacher=0.05`.
+- Add RGB/latent token dataset and compare against state-token PFD.

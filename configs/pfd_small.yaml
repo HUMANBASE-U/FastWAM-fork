@@ -1,0 +1,30 @@
+name: stackcube_pfd_small
+env_id: StackCube-v1
+traj_path: ~/.maniskill/demos/StackCube-v1/rl/trajectory.state.pd_ee_delta_pos.physx_cpu.h5
+obs_mode: state
+control_mode: pd_ee_delta_pos
+obs_dim: 48
+action_dim: 4
+action_horizon: 8
+state_horizon: 8
+model:
+  hidden_dim: 384
+  num_layers: 6
+  num_heads: 6
+  ffn_dim: 1024
+  adapter_hidden_dim: 512
+  use_pfd: true
+  lambda_video: 1.0
+  lambda_gt: 1.0
+  lambda_res: 0.5
+  lambda_teacher: 0.1
+train:
+  steps: 5000
+  batch_size: 512
+  lr: 0.0003
+  weight_decay: 0.000001
+  num_workers: 2
+eval:
+  episodes: 20
+  max_episode_steps: 50
+  execute_horizon: 1
